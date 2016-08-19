@@ -103,13 +103,17 @@
         {
             echo "<div class='genMod sqlMod'><div class='listName'>SQL Task</div>
                     <div class='newListName'>
-                        <div class='topNewList'>
+                        <div class='topNewList byOrder'>
                         
                         <form action='inc/oper.php' method='post'>
                         <select name='GetOrder'>
-                            <option value='alpha'>Get all statuses, order by alphabet</option>
+                            <option value='alpha'>Get all statuses, not repeating, alphabetically ordered</option>
                             <option value='cntEachPro'>Get the count of all tasks in each project, order by tasks count descending</option>
-                        </select>
+                            <option value='cntEachNms'>Get the count of all tasks in each project, order by projects names</option>
+                            <option value='dupTsk'>Get the list of tasks with duplicate names. Order alphabetically</option>
+                            <option value='Garage'>Get the list of tasks having several exact matches of both name and status, from the project \'Garage\'</option>
+                            <option value='more10'>Get the list of project names having more than 10 tasks in status ‘completed’. Order by project_id</option>
+                        </select> 
                         <input class = 'AddTaskBut' type='submit' value='Add Task'></form>
                     </div></div>
             

@@ -326,6 +326,10 @@ margin-top: 22px;
   text-shadow: 1px 1px 1px rgba(0,0,0,0.2) ;
     float: right;
 }
+.byOrder{
+    width: 400px;
+}
+
 .tdTask {
   -webkit-box-sizing: content-box;
   -moz-box-sizing: content-box;
