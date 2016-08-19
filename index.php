@@ -106,9 +106,10 @@
                         <div class='topNewList'>
                         
                         <form action='inc/oper.php' method='post'>
-                        <input class='newListNameInputTxt' type='text' name='newTask' placeholder='Start typing here to create a task...'>
-                        <input type='hidden' name='idList' value=".$lst['id'].">
-                        <input type='hidden' name='oper' value='newTask'>
+                        <select name='GetOrder'>
+                            <option value='alpha'>Get all statuses, order by alphabet</option>
+                            <option value='cntEachPro'>Get the count of all tasks in each project, order by tasks count descending</option>
+                        </select>
                         <input class = 'AddTaskBut' type='submit' value='Add Task'></form>
                     </div></div>
             
