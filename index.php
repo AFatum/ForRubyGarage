@@ -41,9 +41,10 @@
                         <input type='hidden' name='idList' value=".$lst['id'].">
                         <input type='hidden' name='oper' value='newTask'>
                         <input class = 'AddTaskBut' type='submit' value='Add Task'></form>
-                    </div></div><table>";
+                    </div></div>";
                 if(is_array($task))
                 {
+                    echo "<table>";
                     foreach($task as $tsk)                  // формирование списка заданий
                     {
                         if($lst['id'] == $tsk['project_id'])
@@ -100,7 +101,18 @@
         }
         if($_GET['id'] == "SQLtask")
         {
+            echo "<div class='genMod sqlMod'><div class='listName'>SQL Task</div>
+                    <div class='newListName'>
+                        <div class='topNewList'>
+                        
+                        <form action='inc/oper.php' method='post'>
+                        <input class='newListNameInputTxt' type='text' name='newTask' placeholder='Start typing here to create a task...'>
+                        <input type='hidden' name='idList' value=".$lst['id'].">
+                        <input type='hidden' name='oper' value='newTask'>
+                        <input class = 'AddTaskBut' type='submit' value='Add Task'></form>
+                    </div></div>
             
+            </div>";
         }
 
 ?>
