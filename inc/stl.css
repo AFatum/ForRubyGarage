@@ -218,7 +218,7 @@ margin-top: 22px;
   padding: 12px 20px;
   overflow: hidden;
   border: none;
-  font: normal 16px/1 "Times New Roman", Times, serif;
+  font: normal 14px/normal Arial, Helvetica, sans-serif;
   color: rgba(255,255,255,1);
   text-align: center;
   -o-text-overflow: ellipsis;
@@ -316,7 +316,7 @@ margin-top: 22px;
   width: 468px;
   overflow: hidden;
   border: none;
-  font: normal 16px/1 "Times New Roman", Times, serif;
+  font: normal 14px/normal Arial, Helvetica, sans-serif;
   color: rgba(255,255,255,1);
   text-align: center;
   -o-text-overflow: ellipsis;
@@ -327,7 +327,8 @@ margin-top: 22px;
     float: right;
 }
 .byOrder{
-    width: 400px;
+    width: auto;
+    padding-left: 10px;
 }
 
 .tdTask {
@@ -399,7 +400,7 @@ tr:hover td{
   border: 1px solid rgba(234,232,232,1);
   -webkit-border-radius: 0 0 16px 16px;
   border-radius: 0 0 16px 16px;
-  font: normal 16px/1 "Times New Roman", Times, serif;
+  font: normal 14px/normal Arial, Helvetica, sans-serif;
   color: rgba(255,255,255,1);
   text-align: center;
   -o-text-overflow: ellipsis;
@@ -410,7 +411,16 @@ tr:hover td{
     margin: 0px 0px 20px 38%;
 }
 .sqlMod{
-    margin-top: 40px;
+    margin: 40px 0 20px 33%;
+    width: 734px;
+}
+.sqlMod2{
+    width: auto;
+}
+.sqlMod3{
+    padding: 0 11px 0 10px;
+    width: 23px;
+    height: 23px;
 }
 
 .nav, .nav1, .nav2 {
@@ -427,6 +437,18 @@ tr:hover td{
     height: 16px;
     display: inline;
     display: inline-block;
+}
+.letter{
+    font: normal 14px/normal Arial, Helvetica, sans-serif;
+    text-align: left;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+    color: rgb(82, 82, 82);
+    width: 520px;
+    padding-left: 19px;
+    margin-top: 7px;
+}
+.letter2{
+    width: 555px;
 }
 
 .nav1{
