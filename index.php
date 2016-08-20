@@ -114,7 +114,6 @@
                     <div class='newListName sqlMod2'>
                         <form action='inc/SQLtask.php' method='post'>
                         <select name='GetOrder'>
-                            <option value='alpha'>Get all statuses, not repeating, alphabetically ordered</option>
                             <option value='cntEachPro'>Get the count of all tasks in each project, order by tasks count descending</option>
                             <option value='cntEachNms'>Get the count of all tasks in each project, order by projects names</option>
                             <option value='dupTsk'>Get the list of tasks with duplicate names. Order alphabetically</option>
@@ -122,6 +121,11 @@
                             <option value='more10'>Get the list of project names having more than 10 tasks in status ‘completed’. Order by project_id</option>
                         </select> 
                         <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get1'><br>
+                        <div class='letter'>Get all statuses is <select name='statuses'> 
+                            <option value='com'>complete</option>
+                            <option value='notCom'>not complete</option>
+                        </select>, not repeating, alphabetically ordered
+                        <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get2'></div>
                         <div class='letter'>Get the tasks for all projects having the name beginning with <select name='beginLetter'> 
                             <option value='a'>'A'</option>
                             <option value='b'>'B'</option>
