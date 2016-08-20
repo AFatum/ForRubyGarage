@@ -29,9 +29,12 @@
                 }
                 else 
                     $nameList = $lst['name'];
+                
+                // определяем есть ли переданные параметры GET для корректного отображения форм
+                $linkRenameList = (!empty($_SERVER['QUERY_STRING'])) ? "href='http://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&renameList=".$lst['id'] : "href='index.php?renameList=".$lst['id'];
                     
                 echo "<div class='genMod'><div class='listName'><span class='wf'><span class='nav nav1'></span></span>".$nameList."
-                        <div class='wb'><span class='wa'><a class='nav nav1' href='index.php?renameList=".$lst['id']."'></a></span> | 
+                        <div class='wb'><span class='wa'><a class='nav nav1' ".$linkRenameList."'></a></span> | 
                         <span class='wa'><a class='nav nav2' href='inc/oper.php?deleteList=".$lst['id']."'></a></span></div></div>";
                 echo "<div class='newListName'><span class='wr'><span class='nav nav1'></span></span>
                         <div class='topNewList'>
@@ -46,9 +49,12 @@
                 {
                     echo "<table>";
                     foreach($task as $tsk)                  // формирование списка заданий
-                    {
+                    {      
                         if($lst['id'] == $tsk['project_id'])
                         {
+                            // определяем есть ли переданные параметры GET для корректного отображения форм
+                            $linkRenameTask = (!empty($_SERVER['QUERY_STRING'])) ? "href='http://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&updl=".$lst['id']."&updt=".$tsk['id'] : "href='index.php?updl=".$lst['id']."&updt=".$tsk['id'];                            
+                            
                             if($tsk['status'] == 0)
                             {   $stlTr = NULL;  $stlTr2 = NULL; $nav="nav5";    }
                             else
@@ -70,7 +76,7 @@
                             echo "<td class='navIc".$stlTr2."'>
                                     <span class='wn'><a class='nav nav1' href='inc/oper.php?order=up&updl=".$lst['id']."&updt=".$tsk['id']."'></a></span> | 
                                     <span class='wn'><a class='nav nav2' href='inc/oper.php?order=down&updl=".$lst['id']."&updt=".$tsk['id']."'></a></span> |  
-                                    <span class='wn'><a class='nav nav3' href='index.php?updl=".$lst['id']."&updt=".$tsk['id']."'></a></span> | 
+                                    <span class='wn'><a class='nav nav3' ".$linkRenameTask."'></a></span> | 
                                     <span class='wn'><a class='nav nav4' href='inc/oper.php?uptL=".$lst['id']."&uptT=".$tsk['id']."'></a></span>
                                 </td></tr>";
                         }
@@ -82,10 +88,13 @@
             }
         }
     
+    // определяем есть ли переданные параметры GET для корректного отображения форм
+    $linkAddList = (!empty($_SERVER['QUERY_STRING'])) ? "href='http://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&id=add2list'" : "href='index.php?id=add2list'"; 
+    $linkSQLtask = (!empty($_SERVER['QUERY_STRING'])) ? "href='http://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&id=SQLtask'" : "href='index.php?id=SQLtask'"; 
     ?>
     
-    <a class = "AddList" href ="index.php?id=add2list" title="add to list">Add TODO List</a>
-    <a class = "AddList sqlTask" href ="index.php?id=SQLtask" title="SQL task">SQL task</a>
+    <a class = "AddList" <?= $linkAddList ?> title="Add TODO List">Add TODO List</a>
+    <a class = "AddList sqlTask" <?= $linkSQLtask ?> title="SQL task">SQL task</a>
 </body>
 </html>
 <?php
