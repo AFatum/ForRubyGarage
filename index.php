@@ -125,7 +125,7 @@
                             <option value='com'>complete</option>
                             <option value='notCom'>not complete</option>
                         </select>, not repeating, alphabetically ordered
-                        <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get2'></div>
+                        <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get4'></div>
                         <div class='letter'>Get the tasks for all projects having the name beginning with <select name='beginLetter'> 
                             <option value='a'>'A'</option>
                             <option value='b'>'B'</option>
@@ -185,8 +185,25 @@
                         </select> letter in the middle of the name.
                         <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get3'></div>
                         </form>
-                    </div>
-            
-            </div>";
+                    </div>";
+            if($_SESSION['SQL'] == "cntEachPro")
+            {
+                $result = $_SESSION['res'];
+                echo "<table>";
+                echo "<tr><th>List Name</th>
+                        <th>List Name</th>
+                        </tr>";
+                /*foreach($result as $key => $rst)
+                {
+                }*/
+                        
+                echo "</table>";
+                
+            }
+            echo "</div>";
+            echo "<pre>";
+            print_r($_SESSION['res']);
+            print_r($_SESSION['SQL']);
+            echo "</pre>";
         }
 ?>
