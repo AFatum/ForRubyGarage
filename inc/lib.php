@@ -191,7 +191,6 @@ function uptOrder($id, $idPro, $ord, $up=0)
     else { mysqli_free_result($result); return true; }
 }
 
-
 //--------Изменение порядка задачи-(доработанная)---------------------
 function uptOrder2($id1, $id2, $idPro, $up=true)
 {
