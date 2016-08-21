@@ -12,33 +12,81 @@ if($_POST['GetOrder'])
             $result = array();
             $idPro = 0;
             $cnt = 0;
-            foreach($lists as $lst)
+            $listName = "";
+            $gen = "";
+
+            /*if(countRes())
             {
-                foreach($tasks as $tsk)
+                foreach($lists as $lst)
                 {
-                    if($lst['id'] == $tsk['project_id'])
+                    foreach($tasks as $tsk)
                     {
-                        if($idPro != $tsk['project_id']) 
+                        if($lst['id'] == $tsk['project_id'])
                         {
-                            $idPro = $tsk['project_id'];
-                            $cnt = 0;
-                            //$result[0]['idPro'] = $tsk['project_id'];
+                            if($idPro != $tsk['project_id'])
+                            {
+                                $cnt = 1;
+                                $result[$lst['name']] = $cnt;
+                                $idPro = $tsk['project_id'];
+                                continue;
+                            }
+                            $cnt ++;
+                            $result[$lst['name']] = $cnt;
                         }
-                        $result[$idPro][$tsk['id']] = $tsk['name'];
-                        $cnt++;
-                        if($idPro > 0) 
-                        {
-                            $result[$idPro]['cnt'] = $cnt;
-                            $result[$idPro]['listName'] = $lst['name'];
-                            $_SESSION['SQL'] = "cntEachPro";
-                        }
-                        
                     }
-                }                
+                }
+                foreach($result as $key => $res)
+                {   if(countRes($key, $res)) continue;  }
+                
+                if ($gen = countRes(-5, -5))
+                {
+                    if (countRes(-1))
+                    {
+                        $_SESSION['res'] = $gen;
+                        $_SESSION['SQL'] = "cntEachPro";
+                        header("Location: http://ruby.ua/index.php?id=SQLtask");
+                        exit;
+                    }
+                    
+                }
+                */
+            /*foreach($lists as $lst)
+                {
+                    foreach($tasks as $tsk)
+                    {
+                        if($lst['id'] == $tsk['project_id'])
+                        {
+                            if($idPro != $tsk['project_id'])
+                            {
+                                $cnt = 1;
+                                $result[$lst['name']] = $cnt;
+                                $idPro = $tsk['project_id'];
+                                continue;
+                            }
+                            $cnt ++;
+                            $result[$lst['name']] = $cnt;
+                        }
+                    }
+                }
+            /*
+            echo "<pre>";
+            print_r($result);
+            //print_r($_SESSION['SQL2']);
+            echo "</pre>";
+            exit;
+            if($gen = countRes2($result))
+            {
+                
+                $_SESSION['res2'] = $gen;
+                $_SESSION['SQL2'] = "cntEachPro";
+                //unset($_SESSION['res'], $_SESSION['SQL']);
+                header("Location: http://ruby.ua/index.php?id=SQLtask");
             }
+            */
+            $_SESSION['SQL2'] = "cntEachPro";
+            
         break;
     }
-    $_SESSION['res'] = $result;
     header("Location: http://ruby.ua/index.php?id=SQLtask");
     exit;
 }

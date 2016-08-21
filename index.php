@@ -188,22 +188,58 @@
                     </div>";
             if($_SESSION['SQL'] == "cntEachPro")
             {
-                $result = $_SESSION['res'];
-                echo "<table>";
+                //$result = $_SESSION['res'];
+                echo "<table class='cntTask'>";
                 echo "<tr><th>List Name</th>
-                        <th>List Name</th>
+                        <th class='tdCntTask'>Count Task</th>
                         </tr>";
-                /*foreach($result as $key => $rst)
+                $result = array();
+                foreach($list as $lst)
                 {
-                }*/
-                        
+                    foreach($task as $tsk)
+                    {
+                        if($lst['id'] == $tsk['project_id'])
+                        {
+                            if($idPro != $tsk['project_id'])
+                            {
+                                $cnt = 1;
+                                $result[$lst['name']] = $cnt;
+                                $idPro = $tsk['project_id'];
+                                continue;
+                            }
+                            $cnt ++;
+                            $result[$lst['name']] = $cnt;
+                        }
+                    }
+                }
+                asort($result);
+                foreach($result as $key => $rst)
+                {
+                    echo "<tr><td>".$key."</td><td class='tdCntTask'>".$rst."</td></tr>";
+                } 
+                
+                /*
+                if(!$gen = countRes(-5, -5))
+                    echo "Какая-то ошибка в запросе ".mysqli_error($link);
+                else
+                {
+                    foreach($gen as $key => $rst)
+                    {
+                        echo "<tr><td>".$key."</td><td class='tdCntTask'>".$rst."</td></tr>";
+                    }   
+                }
+                foreach($result as $key => $rst)
+                {
+                    echo "<tr><td>".$key."</td><td class='tdCntTask'>".$rst."</td></tr>";
+                }       
+                */
                 echo "</table>";
                 
             }
             echo "</div>";
             echo "<pre>";
-            print_r($_SESSION['res']);
-            print_r($_SESSION['SQL']);
+            print_r($_SESSION['res2']);
+            print_r($_SESSION['SQL2']);
             echo "</pre>";
         }
 ?>
