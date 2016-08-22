@@ -186,14 +186,17 @@
                         <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get3'></div>
                         </form>
                     </div>";
-            if($_SESSION['SQL'] == "cntEachPro")
+            if($_SESSION['SQL'] == "cntEachPro") // если нужно вывести таблицу проектов, отсортированной по количеству заданий
             {
-                //$result = $_SESSION['res'];
+                if($_GET['sort'] == 'ksort') $linkSort = "krsort"; //для сортировки по названию листа
+                else $linkSort = "ksort"; //для обратной сортировки по названию листа
+                if($_GET['sort'] == 'asort') $linkSortCnt = "arsort"; //для сортировки по названию листа
+                else $linkSortCnt = "asort"; //для обратной сортировки по названию листа
+                $resCntEcPro = array();
                 echo "<table class='cntTask'>";
-                echo "<tr><th>List Name</th>
-                        <th class='tdCntTask'>Count Task</th>
+                echo "<tr><th><a href='inc/SQLtask.php?sort=".$linkSort."' class='thColor'>List Name</th>
+                        <th class='tdCntTask'><a href='inc/SQLtask.php?sort=".$linkSortCnt."' class='thColor'>Count Task</a></th>
                         </tr>";
-                $result = array();
                 foreach($list as $lst)
                 {
                     foreach($task as $tsk)
@@ -203,38 +206,24 @@
                             if($idPro != $tsk['project_id'])
                             {
                                 $cnt = 1;
-                                $result[$lst['name']] = $cnt;
+                                $resCntEcPro[$lst['name']] = $cnt;
                                 $idPro = $tsk['project_id'];
                                 continue;
                             }
                             $cnt ++;
-                            $result[$lst['name']] = $cnt;
+                            $resCntEcPro[$lst['name']] = $cnt;
                         }
                     }
                 }
-                asort($result);
-                foreach($result as $key => $rst)
-                {
+                // сортируем массив в соответствии с полученными параметрами
+                if($_GET['sort'] == 'asort') asort($resCntEcPro);
+                if($_GET['sort'] == 'arsort') arsort($resCntEcPro);                
+                if($_GET['sort'] == 'ksort') ksort($resCntEcPro);                
+                if($_GET['sort'] == 'krsort') krsort($resCntEcPro);                
+                foreach($resCntEcPro as $key => $rst)
                     echo "<tr><td>".$key."</td><td class='tdCntTask'>".$rst."</td></tr>";
-                } 
-                
-                /*
-                if(!$gen = countRes(-5, -5))
-                    echo "Какая-то ошибка в запросе ".mysqli_error($link);
-                else
-                {
-                    foreach($gen as $key => $rst)
-                    {
-                        echo "<tr><td>".$key."</td><td class='tdCntTask'>".$rst."</td></tr>";
-                    }   
-                }
-                foreach($result as $key => $rst)
-                {
-                    echo "<tr><td>".$key."</td><td class='tdCntTask'>".$rst."</td></tr>";
-                }       
-                */
                 echo "</table>";
-                
+                //unset($_SESSION['SQL']);
             }
             echo "</div>";
             echo "<pre>";
@@ -242,4 +231,5 @@
             print_r($_SESSION['SQL2']);
             echo "</pre>";
         }
+       else unset($_SESSION['SQL']); // if(!$_GET['id'] == "SQLtask") удаляем переменную за ненадобностью
 ?>

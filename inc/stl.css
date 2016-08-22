@@ -372,6 +372,9 @@ td, th {
 .tdCntTask{
     width: 30%;
 }
+.thColor{
+    color: #669;
+}
 td.statusFalse{
     background: #ffffff;
 }
