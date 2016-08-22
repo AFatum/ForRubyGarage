@@ -192,10 +192,10 @@
                 echo "<table class='cntTask'>";
                 echo "<tr><th>List Name
                 <span class='wn1'><a class='nav nav7' href='inc/SQLtask.php?sort=ksort'></a></span>
-                <span class='wn1'><a class='nav nav8' href='inc/SQLtask.php?sort=krsort'></a></span></th>
+                <span class='wn1 wn2'><a class='nav nav8' href='inc/SQLtask.php?sort=krsort'></a></span></th>
                         <th class='tdCntTask'>Count Task
                         <span class='wn1'><a class='nav nav7' href='inc/SQLtask.php?sort=asort'></a></span>
-                        <span class='wn1'><a class='nav nav8' href='inc/SQLtask.php?sort=arsort'></a></span></th>
+                        <span class='wn1 wn2'><a class='nav nav8' href='inc/SQLtask.php?sort=arsort'></a></span></th>
                         </tr>";
                 foreach($list as $lst)
                 {
@@ -216,20 +216,66 @@
                     }
                 }
                 // сортируем массив в соответствии с полученными параметрами
-                if($_GET['sort'] == 'asort') asort($resCntEcPro);
-                if($_GET['sort'] == 'arsort') arsort($resCntEcPro);                
-                if($_GET['sort'] == 'ksort') ksort($resCntEcPro);                
-                if($_GET['sort'] == 'krsort') krsort($resCntEcPro);                
+                if($_GET['sort'] === 'asort') asort($resCntEcPro);
+                if($_GET['sort'] === 'arsort') arsort($resCntEcPro);                
+                if($_GET['sort'] === 'ksort') ksort($resCntEcPro);                
+                if($_GET['sort'] === 'krsort') krsort($resCntEcPro);                
                 foreach($resCntEcPro as $key => $rst)
                     echo "<tr><td>".$key."</td><td class='tdCntTask'>".$rst."</td></tr>";
                 echo "</table>";
                 //unset($_SESSION['SQL']);
+                echo "</div>";
             }
-            echo "</div>";
-            /*echo "<pre>";
-            print_r($_SESSION['res2']);
-            print_r($_SESSION['SQL2']);
-            echo "</pre>";*/
         }
-       else unset($_SESSION['SQL']); // if(!$_GET['id'] == "SQLtask") удаляем переменную за ненадобностью
+            if($_SESSION['SQL'] == "dupTsk") // если нужно вывести таблицу задач с дублирующими именами
+            {
+                $name = NULL;
+                $num = NULL;
+                $dupl = array();
+                echo "<table class='cntTask'>";
+                echo "<tr><th class='numDup'>#</th>";
+                echo "<th class='ProNameDup'>Project Name
+                <span class='wn1'><a class='nav nav7' href='inc/SQLtask.php?sort=ksortDup'></a></span>
+                <span class='wn1 wn2'><a class='nav nav8' href='inc/SQLtask.php?sort=krsortDup'></a></span></th>
+                        <th>Task Name</th></tr>";
+     
+                $cntDup = 0;
+                if($dubles = dubles())
+                {
+                    foreach($task as $tsk)
+                    {
+                        foreach($dubles as $dls)
+                        {
+                            if($tsk['name'] == $dls['name'])
+                            {
+                                foreach($list as $lst)
+                                {
+                                    if($tsk['project_id'] == $lst['id'])
+                                    {
+                                        $cntDup ++;
+                                       $dupl[$lst['name']." (".$cntDup.")"] = $tsk['name'];
+                                        break; 
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                
+                if(count($dupl) > 0) // если найдены совпадения, заполняем таблицу
+                {
+                    if($_GET['sort'] === 'ksortDup') ksort($dupl);                
+                    if($_GET['sort'] === 'krsortDup') krsort($dupl); 
+                    foreach($dupl as $key => $dup)
+                    {
+                        $num ++;
+                        echo "<tr><td>".$num."</td><td>".$key."</td><td>".$dup."</td></tr>";
+                    }
+                }
+                // если же совпадения не найдены, то отображаем соответствующее сообщение:
+                else echo "<tr><td colspan=3><strong>Matches not found in the task name</strong></td></tr>";
+                echo "</table></div>";
+            }
+       if(empty($_GET['SQLtask'])) unset($_SESSION['SQL']); //удаляем переменную за ненадобностью
 ?>

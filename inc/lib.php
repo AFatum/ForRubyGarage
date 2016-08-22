@@ -239,84 +239,19 @@ function uptOrder2($id1, $id2, $idPro, $up=true)
 }
 
 //==========================================СОРТИРОВКА====================
-function countRes($name=0, $cnt=0)
+function dubles()
 {
     global $link;
     
-    //if (!is_array($arr)) return false;
-    if($name == 0 and $cnt == 0)
-    {  
-        $sql = "CREATE TEMPORARY TABLE t_count(
-        id int NOT NULL auto_increment,
-        name varchar(255) NOT NULL default '',
-        cnt int(9) NOT NULL,
-        PRIMARY KEY (id))";
-        if(!$result = mysqli_query($link, $sql)) return false;
-        else return true;
-    }
-    
-    else if($name == -5 and $cnt == -5)
-    {
-        $sql = "SELECT id, name, cnt 
-			FROM t_count
-			ORDER BY cnt";
+	$sql = "SELECT id, name
+			FROM tasks
+			GROUP BY name
+            HAVING COUNT(name)>1";
 	if(!$result = mysqli_query($link, $sql))
 		return false;
 	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
-	//mysqli_free_result($result);
+	mysqli_free_result($result);
 	return $items;
-    }
-    
-    else if($name < 0 or $cnt < 0)
-    {
-        $sql = "DROP TEMPORARY TABLE `t_count`";
-        if(!$result = mysqli_query($link, $sql)) return false;
-        else return true;
-    }
-    else
-    {
-        $sql = "INSERT INTO t_count(name, cnt) VALUES (?, ?)";
-        if(!$stmtIns = mysqli_prepare($link, $sql)) return false;
-
-        mysqli_stmt_bind_param($stmtIns, 'si', $name, $cnt);
-        mysqli_stmt_execute($stmtIns) or die("Какая-то ошибка в запросе ".mysqli_error($link));    
-       // mysqli_stmt_close($stmtIns);
-        return true;
-    }
-}
-function countRes2($arr)
-{
-    global $link;
-    
-    if (!is_array($arr)) return false;
-    $sql = "CREATE TEMPORARY TABLE t_count(
-        id int NOT NULL auto_increment,
-        name varchar(255) NOT NULL default '',
-        cnt int(9) NOT NULL,
-        PRIMARY KEY (id))";
-        if(!$result = mysqli_query($link, $sql)) return false;
-        else
-        {
-            foreach($arr as $key => $lst)
-            {
-                $sql2 = "INSERT INTO t_count(name, cnt) VALUES (?, ?)";
-                if(!$stmtIns = mysqli_prepare($link, $sql2)) return false;
-                mysqli_stmt_bind_param($stmtIns, 'si', $key, $lst);
-                if(!mysqli_stmt_execute($stmtIns)) die("Какая-то ошибка в запросе ".mysqli_error($link));
-                else continue;
-            }
-            $sql3 = "SELECT id, name, cnt 
-			FROM t_count
-			ORDER BY cnt";
-            if(!$result = mysqli_query($link, $sql3)) return false;
-	       else
-           {
-                $items = mysqli_fetch_all($result, MYSQLI_ASSOC);
-                mysqli_free_result($result);
-                mysqli_stmt_close($stmtIns);
-                return $items;
-           }
-        }
 }
 
 

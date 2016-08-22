@@ -17,6 +17,11 @@ if($_POST['GetOrder'])
             header("Location: http://ruby.ua/index.php?id=SQLtask&sort=ksort");
             exit;
         break;
+        case "dupTsk":
+            $_SESSION['SQL'] = "dupTsk";
+            header("Location: http://ruby.ua/index.php?id=SQLtask&sort=ksort");
+            exit;
+        break;
     }
     //header("Location: http://ruby.ua/index.php?id=SQLtask");
     //exit;
@@ -45,6 +50,14 @@ if($_GET['sort'])
         case 'krsort':
             $_SESSION['SQL'] = "cntEachPro";
             header("Location: http://ruby.ua/index.php?id=SQLtask&sort=krsort");
+        break;    
+        case 'ksortDup':
+            $_SESSION['SQL'] = "dupTsk";
+            header("Location: http://ruby.ua/index.php?id=SQLtask&sort=ksortDup");
+        break;    
+        case 'krsortDup':
+            $_SESSION['SQL'] = "dupTsk";
+            header("Location: http://ruby.ua/index.php?id=SQLtask&sort=krsortDup");
         break;
     }
 }
