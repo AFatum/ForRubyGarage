@@ -499,10 +499,31 @@ tr:hover td{
 .nav6:hover{
     background-position: 0px -103px;
 }
+.nav7{
+    background-position: 0px -32px;
+    background-size: 194% auto;
+}
+.nav7:hover{
+    background-position: -16px -32px;
+}
+.nav8{
+    background-position: 0px -46px;
+    background-size: 194% auto;
+    top: -8px;
+}
+.nav8:hover{
+    background-position: -16px -46px;
+}
 .wn{
     width: 18px;
     overflow:hidden;
     display: inline-block;
+}
+.wn1{
+    width: 18px;
+    overflow:hidden;
+    display: inline-block;
+    height: 10px;
 }
 .wa{
     display: inline-block;

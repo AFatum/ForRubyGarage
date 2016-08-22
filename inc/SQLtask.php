@@ -12,7 +12,6 @@ if($_POST['GetOrder'])
             header("Location: http://ruby.ua/index.php?id=SQLtask&sort=asort");
             exit;
         break;
-    }
         case "cntEachNms":
             $_SESSION['SQL'] = "cntEachPro";
             header("Location: http://ruby.ua/index.php?id=SQLtask&sort=ksort");

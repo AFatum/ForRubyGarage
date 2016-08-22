@@ -188,14 +188,14 @@
                     </div>";
             if($_SESSION['SQL'] == "cntEachPro") // если нужно вывести таблицу проектов, отсортированной по количеству заданий
             {
-                if($_GET['sort'] == 'ksort') $linkSort = "krsort"; //для сортировки по названию листа
-                else $linkSort = "ksort"; //для обратной сортировки по названию листа
-                if($_GET['sort'] == 'asort') $linkSortCnt = "arsort"; //для сортировки по названию листа
-                else $linkSortCnt = "asort"; //для обратной сортировки по названию листа
                 $resCntEcPro = array();
                 echo "<table class='cntTask'>";
-                echo "<tr><th><a href='inc/SQLtask.php?sort=".$linkSort."' class='thColor'>List Name</th>
-                        <th class='tdCntTask'><a href='inc/SQLtask.php?sort=".$linkSortCnt."' class='thColor'>Count Task</a></th>
+                echo "<tr><th>List Name
+                <span class='wn1'><a class='nav nav7' href='inc/SQLtask.php?sort=ksort'></a></span>
+                <span class='wn1'><a class='nav nav8' href='inc/SQLtask.php?sort=krsort'></a></span></th>
+                        <th class='tdCntTask'>Count Task
+                        <span class='wn1'><a class='nav nav7' href='inc/SQLtask.php?sort=asort'></a></span>
+                        <span class='wn1'><a class='nav nav8' href='inc/SQLtask.php?sort=arsort'></a></span></th>
                         </tr>";
                 foreach($list as $lst)
                 {
@@ -226,10 +226,10 @@
                 //unset($_SESSION['SQL']);
             }
             echo "</div>";
-            echo "<pre>";
+            /*echo "<pre>";
             print_r($_SESSION['res2']);
             print_r($_SESSION['SQL2']);
-            echo "</pre>";
+            echo "</pre>";*/
         }
        else unset($_SESSION['SQL']); // if(!$_GET['id'] == "SQLtask") удаляем переменную за ненадобностью
 ?>
