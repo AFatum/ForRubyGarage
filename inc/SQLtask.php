@@ -22,6 +22,11 @@ if($_POST['GetOrder'])
             header("Location: http://ruby.ua/index.php?id=SQLtask&sort=ksort");
             exit;
         break;
+        case "Garage":
+            $_SESSION['SQL'] = "Garage";
+            header("Location: http://ruby.ua/index.php?id=SQLtask");
+            exit;
+        break;
     }
     //header("Location: http://ruby.ua/index.php?id=SQLtask");
     //exit;

@@ -357,8 +357,17 @@ td, th {
     padding: 10px 15px;
     background: #ffffff;
 }
+.ncom{
+    color: #b40000;
+    font-weight: bold;
+}
+.com{
+    color: #009b1e;
+    font-weight: bold;
+}
 .tdCntTask{width: 30%;}
 .numDup{width: 10%;}
+.thGar{width: 35%;}
 .ProNameDup{width: 45%;}
 .thColor{
     color: #669;
