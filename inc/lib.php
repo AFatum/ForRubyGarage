@@ -218,8 +218,8 @@ function uptOrder2($id1, $id2, $idPro, $up=true)
                     id = ".$ID2." 
                 WHERE
                     id LIKE 11111";
-    
-    if(!$result1 = mysqli_query($link, $sql1))
+    $result1 = mysqli_query($link, $sql1);
+    if(!$result1)
         die("Какая-то ошибка в запросе ".mysqli_error($link));
     else 
     {
@@ -231,7 +231,6 @@ function uptOrder2($id1, $id2, $idPro, $up=true)
             die("Какая-то ошибка в запросе ".mysqli_error($link));
             else
             {
-                mysqli_free_result($result1, $result2, $result3);
                 return true;
             }
         }
