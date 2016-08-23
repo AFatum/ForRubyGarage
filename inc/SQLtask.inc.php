@@ -233,8 +233,61 @@
                 
                 echo "</table>";
             }
+            
+            if($_SESSION['SQL'] == "more10") // отображаем список проектов с 10 и более выполнеными заданиями
+            {
+                $cntCmp = 0; // счетчик для подсчёта выполненных задач
+                $result = array(); // результирующий массив
+                echo "<table class='cntTask'>";
+                echo "<tr><th class='numDup'>#</th>";
+                /*
+                echo "<th class='ProNameDup'>Project Name
+                <span class='wn1'><a class='nav nav7' href='index.php?id=SQLtask&sort=ksort10'></a></span>
+                <span class='wn1 wn2'><a class='nav nav8' href='index.php?id=SQLtask&sort=krsort10'></a></span></th>
+                        <th>Count completed tasks
+                        <span class='wn1'><a class='nav nav7' href='index.php?id=SQLtask&sort=asort10'></a></span>
+                        <span class='wn1 wn2'><a class='nav nav8' href='index.php?id=SQLtask&sort=arsort10'></a></span></th></tr>";
+                */
+                
+                echo "<th class='thGar20'>Project_id</th><th class='ProNameDup40'>Project Name</th>
+                        <th>Count completed tasks</th></tr>";
+                
+                
+                foreach($list as $lst) // формируем итоговый массив для вывода списка проектов
+                {
+                    $cntCmp = 0; // обнуляем счётчик на переборе каждого нового проекта
+                    foreach($task as $tsk)
+                    {
+                        if($tsk['project_id'] == $lst['id'])
+                        {
+                            if(!empty($tsk['status']))
+                            {
+                                $cntCmp ++;
+                                $result[$lst['id']]['cnt'] = $cntCmp;
+                                $result[$lst['id']]['name'] = $lst['name'];
+                            }
+                        }
+                    }
+                }
+                // формируем список проектов с 10 и более выполненных заданий
+                $cnt = 0;
+                if(count($result) > 0)
+                {
+                    foreach($result as $key => $res)
+                    {
+                        if($res['cnt'] >= 10)
+                        {
+                            $cnt ++;
+                            echo "<tr><td>".$cnt."</td><td>".$key."</td><td>".$res['name']."</td><td>".$res['cnt']."</td></tr>";  
+                        }
+                    }
+                }
+                if($cnt == 0) echo "<tr><td colspan=4><strong>Projects with 10 and more completed tasks is not found!</strong></td></tr>";
+                echo "</table>";
+            }
         }
        
        
-       if($_GET['id'] != "SQLtask" or ($_GET['id'] == 'SQLtask' and count($_GET) > 1)) unset($_SESSION['SQL']); //удаляем переменную за ненадобностью
+       //if($_GET['id'] != "SQLtask" or ($_GET['id'] == 'SQLtask' and count($_GET) > 1)) unset($_SESSION['SQL']); //удаляем переменную за ненадобностью
+       if($_GET['id'] != "SQLtask") unset($_SESSION['SQL']); //удаляем переменную за ненадобностью
 ?>
