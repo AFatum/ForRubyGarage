@@ -2,7 +2,7 @@
     require("db.php");
     require("lib.php");
 
-if($_POST['GetOrder'])
+if($_POST['GetOrder'] and $_POST['Get1'])
 {
     switch($_POST['GetOrder'])
     {
@@ -36,6 +36,15 @@ if($_POST['GetOrder'])
     //header("Location: http://ruby.ua/index.php?id=SQLtask");
     //exit;
 }
+
+if(isset($_POST['statuses']) and $_POST['Get4'])
+{
+    $_SESSION['SQL'] = "statuses";
+    $_SESSION['sts'] = $_POST['statuses'];
+    header("Location: http://ruby.ua/index.php?id=SQLtask");
+    exit;
+}
+
 if($_GET['sort'])
 {
     switch($_GET['sort'])

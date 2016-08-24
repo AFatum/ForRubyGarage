@@ -53,7 +53,7 @@ function selectList()
 }
 
 //--------Выбор задач-------------------------------------------------
-function selectTasks($idLst = 0)
+function selectTasks($idLst = 0, $sts = -1)
 {
 	global $link;
 
@@ -64,11 +64,29 @@ function selectTasks($idLst = 0)
                 WHERE project_id LIKE ".$idLst."
                 ORDER BY id";
     }
-    else
+    else if($sts < 0)
     {
         $sql = "SELECT id, name, status, project_id 
                 FROM tasks
                 ORDER BY id";
+    }
+    if($sts >= 0)
+    {
+        if(empty($sts))
+        {
+            $sql = "SELECT id, name, status, project_id 
+                FROM tasks
+                WHERE status LIKE 1 
+                ORDER BY name";
+        }
+        else
+        {
+            $sql = "SELECT id, name, status, project_id 
+                FROM tasks
+                WHERE status LIKE 0 
+                OR status LIKE NULL 
+                ORDER BY name";
+        }   
     }
     
 	if(!$result = mysqli_query($link, $sql))

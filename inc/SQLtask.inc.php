@@ -13,8 +13,8 @@
                         </select> 
                         <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get1'><br>
                         <div class='letter'>Get all statuses is <select name='statuses'> 
-                            <option value='com'>complete</option>
-                            <option value='notCom'>not complete</option>
+                            <option value='1'>complete</option>
+                            <option value='0'>not complete</option>
                         </select>, not repeating, alphabetically ordered
                         <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get4'></div>
                         <div class='letter'>Get the tasks for all projects having the name beginning with <select name='beginLetter'> 
@@ -240,14 +240,6 @@
                 $result = array(); // результирующий массив
                 echo "<table class='cntTask'>";
                 echo "<tr><th class='numDup'>#</th>";
-                /*
-                echo "<th class='ProNameDup'>Project Name
-                <span class='wn1'><a class='nav nav7' href='index.php?id=SQLtask&sort=ksort10'></a></span>
-                <span class='wn1 wn2'><a class='nav nav8' href='index.php?id=SQLtask&sort=krsort10'></a></span></th>
-                        <th>Count completed tasks
-                        <span class='wn1'><a class='nav nav7' href='index.php?id=SQLtask&sort=asort10'></a></span>
-                        <span class='wn1 wn2'><a class='nav nav8' href='index.php?id=SQLtask&sort=arsort10'></a></span></th></tr>";
-                */
                 
                 echo "<th class='thGar20'>Project_id</th><th class='ProNameDup40'>Project Name</th>
                         <th>Count completed tasks</th></tr>";
@@ -283,6 +275,36 @@
                     }
                 }
                 if($cnt == 0) echo "<tr><td colspan=4><strong>Projects with 10 and more completed tasks is not found!</strong></td></tr>";
+                echo "</table>";
+            }
+            
+            if($_SESSION['SQL'] == "statuses")
+            {
+                echo "<table class='cntTask'>";
+                echo "<tr><th class='numDup'>#</th>";
+                echo "<th class='thGar'>Project Name</th>
+                        <th class='thGar'>Task Name</th>
+                        <th>Status</th></tr>";
+                $sts = (int) abs($_SESSION['sts']);
+                $taskSts = selectTasks(0, $sts);
+                $cnt = 0;
+                
+                if(count($taskSts) > 0)
+                {
+                    foreach($taskSts as $tsts)
+                    {
+                        foreach($list as $lst)
+                        {
+                            if($tsts['project_id'] == $lst['id'])
+                            {
+                                $cnt ++;
+                                $status = (empty($tsts['status'])) ? "<span class='com'>is complete</span>" : "<span class='ncom'>is not complete</span>";
+                                echo "<tr><td>".$cnt."</td><td>".$lst['name']."</td><td>".$tsts['name']."</td><td>".$status."</td></tr>";
+                            }
+                        }
+                    }   
+                }
+                else  echo "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>"; 
                 echo "</table>";
             }
         }
