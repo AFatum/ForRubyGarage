@@ -44,6 +44,21 @@ if(isset($_POST['statuses']) and $_POST['Get4'])
     header("Location: http://ruby.ua/index.php?id=SQLtask");
     exit;
 }
+if(isset($_POST['beginLetter']) and $_POST['Get2'])
+{
+    $_SESSION['SQL'] = "beginLetter";
+    $_SESSION['let'] = $_POST['beginLetter'];
+    header("Location: http://ruby.ua/index.php?id=SQLtask");
+    exit;
+}
+if(isset($_POST['middleLetter']) and $_POST['Get3'])
+{
+    $_SESSION['SQL'] = "middleLetter";
+    $_SESSION['let'] = $_POST['middleLetter'];
+    header("Location: http://ruby.ua/index.php?id=SQLtask");
+    exit;
+}
+
 
 if($_GET['sort'])
 {

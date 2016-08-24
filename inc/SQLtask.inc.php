@@ -124,9 +124,7 @@
                 $dupl = array();
                 echo "<table class='cntTask'>";
                 echo "<tr><th class='numDup'>#</th>";
-                echo "<th class='ProNameDup'>Project Name
-                <span class='wn1'><a class='nav nav7' href='inc/SQLtask.php?sort=ksortDup'></a></span>
-                <span class='wn1 wn2'><a class='nav nav8' href='inc/SQLtask.php?sort=krsortDup'></a></span></th>
+                echo "<th class='ProNameDup'>Project Name</th>
                         <th>Task Name</th></tr>";
      
                 $cntDup = 0;
@@ -167,7 +165,7 @@
                 else echo "<tr><td colspan=3><strong>Matches not found in the task name</strong></td></tr>";
                 echo "</table></div>";
             }
-            if($_SESSION['SQL'] == "Garage")
+            if($_SESSION['SQL'] == "Garage") // отображаем задачи, которые совпадают с проектом "Гараж" по имени и статусу
             {
                 $idGar = 0;
                 $garage = 0;
@@ -233,7 +231,6 @@
                 
                 echo "</table>";
             }
-            
             if($_SESSION['SQL'] == "more10") // отображаем список проектов с 10 и более выполнеными заданиями
             {
                 $cntCmp = 0; // счетчик для подсчёта выполненных задач
@@ -276,9 +273,8 @@
                 }
                 if($cnt == 0) echo "<tr><td colspan=4><strong>Projects with 10 and more completed tasks is not found!</strong></td></tr>";
                 echo "</table>";
-            }
-            
-            if($_SESSION['SQL'] == "statuses")
+            }           
+            if($_SESSION['SQL'] == "statuses") // отображаем задачи соответствующего статуса
             {
                 echo "<table class='cntTask'>";
                 echo "<tr><th class='numDup'>#</th>";
@@ -298,13 +294,67 @@
                             if($tsts['project_id'] == $lst['id'])
                             {
                                 $cnt ++;
-                                $status = (empty($tsts['status'])) ? "<span class='com'>is complete</span>" : "<span class='ncom'>is not complete</span>";
+                                if($tsts['status'] > 0) $status = "<span class='com'>is complete</span>";
+                                if($tsts['status'] == 0 or $tsts['status'] == NULL) $status = "<span class='ncom'>is not complete</span>";
+                                //$status = (empty($tsts['status'])) ? "<span class='com'>is complete</span>" : "<span class='ncom'>is not complete</span>";
                                 echo "<tr><td>".$cnt."</td><td>".$lst['name']."</td><td>".$tsts['name']."</td><td>".$status."</td></tr>";
                             }
                         }
                     }   
                 }
                 else  echo "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>"; 
+                echo "</table>";
+            }
+            if($_SESSION['SQL'] == "beginLetter") // отображаем задачи, имена которых начинаются на определнную букву
+            {
+                $Let = clear($_SESSION['let']); // получаем заданную букву, на которую будем искать задания
+                $letter = selectLetter(1, $Let); //получаем массив с задачами, которые начинаются на заданную букву
+                echo "<table class='cntTask'>";
+                echo "<tr><th class='numDup'>#</th>";
+                echo "<th class='ProNameDup'>Project Name</th>
+                        <th>Task Name</th></tr>";
+                if(count($letter) > 0) // если есть задачи на заданную букву
+                {
+                    $cnt = 0;
+                    foreach($letter as $let)
+                    {
+                        foreach($list as $lst)
+                        {
+                            if($lst['id'] == $let['project_id'])
+                            {
+                                $cnt ++;
+                                echo "<tr><td>".$cnt."</td><td>".$lst['name']."</td><td>".$let['name']."</td></tr>";
+                            }
+                        }
+                    }
+                }
+                else echo "<tr><td colspan=3><strong>Tasks on the letter '".$_SESSION['let']."' is not found.</strong></td></tr>"; 
+                echo "</table>";
+            }
+            if($_SESSION['SQL'] == "middleLetter") // отображаем задачи, имена которых начинаются на определнную букву
+            {
+                $cntTsk = 0;
+                $Let = clear($_SESSION['let']); // получаем заданную букву, на которую будем искать задания
+                $letter = selectLetter(0, $Let); //получаем массив с проектами, названия которых содержит заданную букву
+                echo "<table class='cntTask'>";
+                echo "<tr><th class='numDup'>#</th>";
+                echo "<th>Project Name</th>
+                        <th class='numDup'>Count Tasks</th></tr>";
+                if(count($letter) > 0) // если есть проекты с заданной буквой
+                {
+                    $cnt = 0;
+                    foreach($letter as $let)
+                    {
+                        $cnt ++;
+                        $cntTsk = 0;
+                        foreach($task as $tsk)
+                        {
+                            if($let['id'] == $tsk['project_id']) $cntTsk ++;
+                        }
+                        echo "<tr><td>".$cnt."</td><td>".$let['name']."</td><td>".$cntTsk."</td></tr>";
+                    }
+                }
+                else echo "<tr><td colspan=3><strong>Projects with the letter '".$_SESSION['let']."' is not found.</strong></td></tr>";
                 echo "</table>";
             }
         }

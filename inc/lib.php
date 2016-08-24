@@ -72,7 +72,7 @@ function selectTasks($idLst = 0, $sts = -1)
     }
     if($sts >= 0)
     {
-        if(empty($sts))
+        if($sts > 0)
         {
             $sql = "SELECT id, name, status, project_id 
                 FROM tasks
@@ -270,7 +270,34 @@ function dubles()
 	mysqli_free_result($result);
 	return $items;
 }
-
+function selectLetter($id = 0, $let)
+{
+    global $link;
+    if(!is_string($let)) return false;
+    if(!is_int($id)) return false;
+    if(strlen($let) > 1) $let = $let{0};
+    
+    if($id > 0)
+    {
+        $sql = "SELECT id, name, status, project_id 
+                FROM tasks
+                WHERE name LIKE '".$let."%' 
+                ORDER BY id";
+    }
+    else
+    {
+        $sql = "SELECT id, name 
+                FROM projects
+                WHERE name LIKE '%".$let."%' 
+                ORDER BY id";
+    }
+    
+    if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
 
 
 //========================================================================
