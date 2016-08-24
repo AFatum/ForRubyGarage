@@ -1,6 +1,6 @@
 <?php
 ob_start();		// включаем буферизацию вывода
-//session_start(); // стартуем сессию
+session_start(); // стартуем сессию
 header ('Content-Type: text/html;charset=utf-8');
 define ('DB_HOST', 'localhost');
 define ('DB_LOGIN', 'root');

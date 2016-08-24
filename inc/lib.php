@@ -53,7 +53,7 @@ function selectList()
 }
 
 //--------Выбор задач-------------------------------------------------
-function selectTasks($idLst = 0)
+function selectTasks($idLst = 0, $sts = -1)
 {
 	global $link;
 
@@ -64,11 +64,29 @@ function selectTasks($idLst = 0)
                 WHERE project_id LIKE ".$idLst."
                 ORDER BY id";
     }
-    else
+    else if($sts < 0)
     {
         $sql = "SELECT id, name, status, project_id 
                 FROM tasks
                 ORDER BY id";
+    }
+    if($sts >= 0)
+    {
+        if($sts > 0)
+        {
+            $sql = "SELECT id, name, status, project_id 
+                FROM tasks
+                WHERE status LIKE 1 
+                ORDER BY name";
+        }
+        else
+        {
+            $sql = "SELECT id, name, status, project_id 
+                FROM tasks
+                WHERE status LIKE 0 
+                OR status LIKE NULL 
+                ORDER BY name";
+        }   
     }
     
 	if(!$result = mysqli_query($link, $sql))
@@ -191,7 +209,6 @@ function uptOrder($id, $idPro, $ord, $up=0)
     else { mysqli_free_result($result); return true; }
 }
 
-
 //--------Изменение порядка задачи-(доработанная)---------------------
 function uptOrder2($id1, $id2, $idPro, $up=true)
 {
@@ -219,8 +236,8 @@ function uptOrder2($id1, $id2, $idPro, $up=true)
                     id = ".$ID2." 
                 WHERE
                     id LIKE 11111";
-    
-    if(!$result1 = mysqli_query($link, $sql1))
+    $result1 = mysqli_query($link, $sql1);
+    if(!$result1)
         die("Какая-то ошибка в запросе ".mysqli_error($link));
     else 
     {
@@ -232,10 +249,56 @@ function uptOrder2($id1, $id2, $idPro, $up=true)
             die("Какая-то ошибка в запросе ".mysqli_error($link));
             else
             {
-                mysqli_free_result($result1, $result2, $result3);
                 return true;
             }
         }
     }
 }
+
+//==========================================СОРТИРОВКА====================
+function dubles()
+{
+    global $link;
+    
+	$sql = "SELECT id, name
+			FROM tasks
+			GROUP BY name
+            HAVING COUNT(name)>1";
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
+function selectLetter($id = 0, $let)
+{
+    global $link;
+    if(!is_string($let)) return false;
+    if(!is_int($id)) return false;
+    if(strlen($let) > 1) $let = $let{0};
+    
+    if($id > 0)
+    {
+        $sql = "SELECT id, name, status, project_id 
+                FROM tasks
+                WHERE name LIKE '".$let."%' 
+                ORDER BY id";
+    }
+    else
+    {
+        $sql = "SELECT id, name 
+                FROM projects
+                WHERE name LIKE '%".$let."%' 
+                ORDER BY id";
+    }
+    
+    if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
+
+
+//========================================================================
 ?>

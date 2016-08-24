@@ -40,12 +40,10 @@ text-decoration:none; text-align:center;
  box-shadow:0px 0px 2px #bababa, inset 0px 0px 1px #ffffff;
 margin-left: 52%;
 }
-
 .sqlTask
 {
     margin: 13px 0 0 6px;
 }
-
 .AddList:hover
 {
 padding:7px 17px;
@@ -67,7 +65,6 @@ border:solid 1px #004F72;
  -moz-box-shadow: 0px 0px 2px #bababa,  inset 1px 1px 6px #acafd4;  
  box-shadow:0px 0px 2px #bababa, inset 1px 1px 6px #acafd4;  
  }
-
 .AddList:active{
  padding:7px 17px; 
  border:solid 1px #004F72; 
@@ -88,7 +85,6 @@ border:solid 1px #004F72;
  -moz-box-shadow: 0px 0px 2px #bababa,  inset 0px 0px 1px #ffffff;  
  box-shadow:0px 0px 2px #bababa, inset 0px 0px 1px #ffffff;    
  }
-
 .AddNewList{text-decoration:none; text-align:center; 
  padding:3px 13px; 
  border:solid 1px #004F72; 
@@ -108,8 +104,7 @@ border:solid 1px #004F72;
  -webkit-box-shadow:0px 0px 2px #bababa, inset 0px 0px 1px #ffffff; 
  -moz-box-shadow: 0px 0px 2px #bababa,  inset 0px 0px 1px #ffffff;  
  box-shadow:0px 0px 2px #bababa, inset 0px 0px 1px #ffffff; 
-margin-top: 22px;
-  
+margin-top: 22px;  
   }
 .AddNewList:hover{
 padding:3px 13px;
@@ -155,7 +150,6 @@ margin-top: 22px;
 margin-top: 22px;
   
  }
-
 .newListTxt {
   display: inline-block;
   -webkit-box-sizing: content-box;
@@ -181,7 +175,6 @@ margin-top: 22px;
     width: 225px;
     margin-left: 49%;
 }
-
 .listName {
   -webkit-box-sizing: content-box;
   -moz-box-sizing: content-box;
@@ -238,7 +231,6 @@ margin-top: 22px;
   text-shadow: 1px 1px 1px rgba(0,0,0,0.2) ;
     width: 500px;
 }
-
 .newListNameInputTxt {
   display: inline-block;
   -webkit-box-sizing: content-box;
@@ -262,7 +254,6 @@ margin-top: 22px;
     width: 295px;
     float: left;
 }
-
 .AddTaskBut {
   display: inline-block;
   -webkit-box-sizing: content-box;
@@ -330,7 +321,6 @@ margin-top: 22px;
     width: auto;
     padding-left: 10px;
 }
-
 .tdTask {
   -webkit-box-sizing: content-box;
   -moz-box-sizing: content-box;
@@ -349,19 +339,40 @@ margin-top: 22px;
   box-shadow: 1px 1px 1px 0 rgba(0,0,0,0.3) ;
   text-shadow: 1px 1px 1px rgba(0,0,0,0.2) ;
 }
-
-
 table {
     width: 541px;
     border-collapse: separate;  
     border-spacing: 0px; 
     /*margin-bottom: 20px;*/
 }
-td {
+table.cntTask {
+    width: 100%;
+    border-collapse: separate;  
+    border-spacing: 0px; 
+    /*margin-bottom: 20px;*/
+}
+td, th {
     border: 1px solid #e8edff;
     color: #669;
     padding: 10px 15px;
     background: #ffffff;
+}
+.ncom{
+    color: #b40000;
+    font-weight: bold;
+}
+.com{
+    color: #009b1e;
+    font-weight: bold;
+}
+.tdCntTask{width: 30%;}
+.numDup{width: 10%;}
+.thGar{width: 35%;}
+.thGar20{width: 20%;}
+.ProNameDup{width: 45%;}
+.ProNameDup40{width: 40%;}
+.thColor{
+    color: #669;
 }
 td.statusFalse{
     background: #ffffff;
@@ -390,7 +401,6 @@ tr:hover td{
 .td3{
     width: 1px;
 }
-
 .genMod {
   -webkit-box-sizing: content-box;
   -moz-box-sizing: content-box;
@@ -422,7 +432,6 @@ tr:hover td{
     width: 23px;
     height: 23px;
 }
-
 .nav, .nav1, .nav2 {
     content: '';
     background-image: url(../img/sprite3.png);
@@ -450,7 +459,6 @@ tr:hover td{
 .letter2{
     width: 555px;
 }
-
 .nav1{
     background-position: 0px -32px;
 }
@@ -487,10 +495,34 @@ tr:hover td{
 .nav6:hover{
     background-position: 0px -103px;
 }
+.nav7{
+    background-position: 0px -32px;
+    background-size: 194% auto;
+}
+.nav7:hover{
+    background-position: -16px -32px;
+}
+.nav8{
+    background-position: 0px -46px;
+    background-size: 194% auto;
+    top: -8px;
+}
+.nav8:hover{
+    background-position: -16px -46px;
+}
 .wn{
     width: 18px;
     overflow:hidden;
     display: inline-block;
+}
+.wn1{
+    width: 18px;
+    overflow:hidden;
+    display: inline-block;
+    height: 10px;
+}
+.wn2{
+    margin-left: -10px;
 }
 .wa{
     display: inline-block;
