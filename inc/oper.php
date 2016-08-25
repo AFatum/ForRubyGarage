@@ -30,7 +30,7 @@
         $name = clear($_POST['newName']);
         if(empty($name))
         {
-            header("Location: https://stormy-river-47352.herokuapp.com//index.php");
+            header("Location: https://stormy-river-47352.herokuapp.com/index.php");
             exit;
         }
         $idTsk = (int) abs($_POST['idTsk']);
