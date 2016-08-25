@@ -9,7 +9,7 @@
     {
         $nameNL = (string) clear($_POST['list']);
         if(newList($nameNL)) {
-            header("Location: http://ruby.ua".$linkUri);
+            header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
         }       
     }
 
@@ -20,7 +20,7 @@
         $idLst = (int) abs($_POST['idList']);
 
         if (newTask($task, $idLst))
-            header("Location: http://ruby.ua".$linkUri);
+            header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
         else echo "Какая-то ошибка".mysqli_error($link);
     }
 
@@ -30,12 +30,12 @@
         $name = clear($_POST['newName']);
         if(empty($name))
         {
-            header("Location: http://ruby.ua/index.php");
+            header("Location: https://stormy-river-47352.herokuapp.com//index.php");
             exit;
         }
         $idTsk = (int) abs($_POST['idTsk']);
         $idPro = (int) abs($_POST['idPro']);
-        if(uptTask($idTsk, $idPro, $name)) header("Location: http://ruby.ua".$linkUri);
+        if(uptTask($idTsk, $idPro, $name)) header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
     }
 
 // ------------------------изменение статуса задачи----------------------------------
@@ -45,7 +45,7 @@
         $uptL = (int) abs($_GET['updl']);
         $uptT = (int) abs($_GET['updt']);   
         if(uptStatus($uptT, $uptL, $status))
-            header("Location: http://ruby.ua".$linkUri);
+            header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
         else echo "Какая-то ошибка в запросе ".mysqli_error($link);
     }
 
@@ -55,7 +55,7 @@ if(!empty($_GET['deleteList']))
         $uptL = (int) abs($_GET['deleteList']);
         
         if(deleteTask("all", $uptL) and deleteList($uptL))
-            header("Location: http://ruby.ua".$linkUri);  
+            header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);  
     }
 // ------------------------удаление задачи----------------------------------
 if(!empty($_GET['uptL']) and !empty($_GET['uptT']))
@@ -64,7 +64,7 @@ if(!empty($_GET['uptL']) and !empty($_GET['uptT']))
         $uptT = (int) abs($_GET['uptT']);
         
         if (deleteTask($uptT, $uptL))
-            header("Location: http://ruby.ua".$linkUri);
+            header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
     }
 
 // ------------------------изменение порядка задач----------------------------------
@@ -97,14 +97,14 @@ if(!empty($_GET['uptL']) and !empty($_GET['uptT']))
         {
             if($orUp == 0)
             {
-                header("Location: http://ruby.ua".$linkUri);
+                header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
                 exit;
             }
             else
             {
                 if(uptOrder2($uptT, $orUp, $uptL))
                 {
-                    header("Location: http://ruby.ua".$linkUri);
+                    header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
                     exit; 
                 }
             }
@@ -113,14 +113,14 @@ if(!empty($_GET['uptL']) and !empty($_GET['uptT']))
         {
             if($orDown == 0)
             {
-                header("Location: http://ruby.ua".$linkUri);
+                header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
                 exit;
             }
             else
             {
                 if(uptOrder2($uptT, $orDown, $uptL, false))
                 {
-                    header("Location: http://ruby.ua".$linkUri);
+                    header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
                     exit; 
                 }
             }
@@ -133,11 +133,11 @@ if(!empty($_GET['uptL']) and !empty($_GET['uptT']))
         $name = clear($_POST['newList']);
         if(empty($name))
         {
-            header("Location: http://ruby.ua".$linkUri);
+            header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
             exit;
         }
         $idPro = (int) abs($_POST['idPro']);
-        if(uptList($idPro, $name)) header("Location: http://ruby.ua".$linkUri);
+        if(uptList($idPro, $name)) header("Location: https://stormy-river-47352.herokuapp.com/".$linkUri);
     }
 
 ?>
