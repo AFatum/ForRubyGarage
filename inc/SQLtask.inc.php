@@ -227,6 +227,7 @@
                         }
                     }
                 }
+                    else  echo "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>"; 
                 
                 
                 echo "</table>";
