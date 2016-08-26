@@ -226,8 +226,8 @@
                             echo "<tr><td>".$cnt."</td><td>".$res['pro']."</td><td>".$res['name']."</td><td>".$sts."</td></tr>";
                         }
                     }
+                    else  echo "<tr><td colspan=4><strong>Project 'Garage' have't matches!</strong></td></tr>"; 
                 }
-                    else  echo "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>"; 
                 
                 
                 echo "</table>";
