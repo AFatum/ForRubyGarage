@@ -11,7 +11,7 @@ if ($_SERVER['SERVER_NAME'] == "stormy-river-47352.herokuapp.com")
 	define ('DB_LOGIN', $urlGlob["user"]);
 	define ('DB_PASS', $urlGlob["pass"]);
 	define ('DB_NAME', substr($urlGlob["path"], 1));
-	define ('ORDERS_LOG', 'orders.txt');
+	define ('LINK_HOST', 'https://stormy-river-47352.herokuapp.com/');
 	$link = mysqli_connect(DB_HOST, DB_LOGIN, DB_PASS, DB_NAME) or die('Ошибка при соединении: '.mysqli_connect_error());
 }
 else
@@ -20,7 +20,7 @@ else
 	define ('DB_LOGIN', 'root');
 	define ('DB_PASS', '');
 	define ('DB_NAME', 'ruby');
-	define ('ORDERS_LOG', 'orders.txt');
+	define ('LINK_HOST', 'http://ruby.ua/');
 	$link = mysqli_connect(DB_HOST, DB_LOGIN, DB_PASS, DB_NAME) or die('Ошибка при соединении: '.mysqli_connect_error());
 }
 ?>

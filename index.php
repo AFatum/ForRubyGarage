@@ -33,9 +33,9 @@
                 
                 // Опрелеляем ссылку переименования проекта
                 if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['renameList']))
-                    $linkRenameList = "href='httpss://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&renameList=".$lst['id'];
+                    $linkRenameList = "href='".LINK_HOST.$_SERVER['REQUEST_URI']."&renameList=".$lst['id'];
                 else if(!empty($_GET['renameList']))
-                    $linkRenameList = "href='httpss://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
+                    $linkRenameList = "href='".LINK_HOST.$_SERVER['REQUEST_URI'];
                 else
                     $linkRenameList = "href='index.php?renameList=".$lst['id'];
                     
@@ -60,9 +60,9 @@
                         {
                             // Опрелеляем ссылку переименования задачи 
                            if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['updl']) and empty($_GET['updt']))
-                                $linkRenameTask = "href='https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&updl=".$lst['id']."&updt=".$tsk['id'];
+                                $linkRenameTask = "href='".LINK_HOST.$_SERVER['REQUEST_URI']."&updl=".$lst['id']."&updt=".$tsk['id'];
                             else if(!empty($_GET['updl']) and !empty($_GET['updt']))
-                                $linkRenameTask = "href='https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
+                                $linkRenameTask = "href='".LINK_HOST.$_SERVER['REQUEST_URI'];
                             else
                                 $linkRenameTask = "href='index.php?updl=".$lst['id']."&updt=".$tsk['id'];
                             
@@ -102,12 +102,12 @@
     
     // Опрелеляем ссылку для отображения формы add2list    
     if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "add2list")
-        $linkAddList = "href='https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&id=add2list'";
+        $linkAddList = "href='".LINK_HOST.$_SERVER['REQUEST_URI']."&id=add2list'";
     else
         $linkAddList = "href='index.php?id=add2list'";
     // Опрелеляем ссылку для отображения формы SQLtask
     if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "SQLtask")
-        $linkSQLtask = "href='https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&id=SQLtask'";
+        $linkSQLtask = "href='".LINK_HOST.$_SERVER['REQUEST_URI']."&id=SQLtask'";
     else
         $linkSQLtask = "href='index.php?id=SQLtask'";
     ?>
