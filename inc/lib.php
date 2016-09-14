@@ -298,7 +298,57 @@ function selectLetter($id = 0, $let)
 	mysqli_free_result($result);
 	return $items;
 }
+// --------------------проверка наличия email пользователя-------------------
+function userExists($login)
+{
+    global $link;
+    $sql = "SELECT id, email
+            FROM users
+            ORDER BY id";
+    if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    
+    foreach($items as $data)
+        if($data['email'] === $login) return $login;
+    
+    return false;
+}
+// --------------------сохраняем пользователя в БД--------------------------
 
+function saveUser($login, $hash)
+{
+    global $link;
+	$sql = "INSERT INTO users(email, pass) VALUES (?, ?)";
+	if(!$stmtIns = mysqli_prepare($link, $sql))
+		return false;
+	mysqli_stmt_bind_param($stmtIns, 'ss', $login, $hash);
+	mysqli_stmt_execute($stmtIns) or die("Какая-то ошибка в запросе ".mysqli_error($link));
+	mysqli_stmt_close($stmtIns);
+	return true;
+}
+// --------------------Авторизация--------------------------
+function control ($login, $pass)
+{
+    global $link;
+    $sql = $sql = "SELECT id, email, pass
+            FROM users
+            ORDER BY id;";
+    if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        
+    foreach($items as $data)
+    {
+        if($login === $data['email'])
+        {
+            if(password_verify(trim($pass), trim($data['pass'])))
+            return $data['email'];
+        }
+        else continue;
+    }
+    return false;
+}
 
 //========================================================================
 ?>

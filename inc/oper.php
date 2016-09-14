@@ -139,5 +139,60 @@ if(!empty($_GET['uptL']) and !empty($_GET['uptT']))
         $idPro = (int) abs($_POST['idPro']);
         if(uptList($idPro, $name)) header("Location: ".LINK_HOST.$linkUri);
     }
+// ------------------------регистрируем нового пользователя---------------------
+    if($_POST['r_email'])
+    {
+        // если заполнены все поля то проверяем данные
+        if(!empty($_POST['r_email']) and !empty($_POST['r_pass1']) and !empty($_POST['r_pass2']))
+        {
+            if($_POST['r_pass1'] != $_POST['r_pass2'])  // если поля паролей на совпадают - нужно отобразить сообщение об этом
+                header("Location: ".LINK_HOST."?reg=2&reg_err=1");
+            else                                        // если поля паролей таки совпадают - продолжаем проветку
+            {
+                $login = clear($_POST['r_email']) ?: $login;    // принимаем логин
+                if(!userExists($login))                         // проверяем есть ли пользователь с таким же email
+                {
+                    $pass = clear($_POST['r_pass1']) ?: $pass;
+                    $hash = trim(password_hash($pass, PASSWORD_BCRYPT)); // хешируем пароль            
+                    if(saveUser($login, $hash))
+                        //$res = "Хэш ".$hash." успешно добавлен в файл";
+                        //$res = "Пользователь ".$login." успешно добавлен.";
+                    {  header("Location: ".LINK_HOST."?reg=1&reg_com=".$login); exit; }
+                    else
+                    {  header("Location: ".LINK_HOST."?reg=1&reg_err=3"); exit; }
+                        //$res = "При записи хэша ".$hash." произошла ошибка!";
+                        //$res = "При добавлении пользователя ".$login." произошла ошибка - ".mysqli_error($link);
+                }
+            }
+        }
+        // если же запонены не все поля, отображаем ошибку с просьбой заполнить таки все
+        else header("Location: ".LINK_HOST."?reg=2&reg_err=2");
+    }
+
+// ------------------------Аутентификация---------------------
+    if($_POST['email'])
+    {
+        // если заполнены все поля то проверяем данные
+        if(!empty($_POST['email']) and !empty($_POST['pass']))
+        { 
+            $login = trim(strip_tags($_POST['email']));
+            $pw = trim(strip_tags($_POST['pass']));
+            $res = control($login, $pw);
+            if(!$res)
+                header("Location: ".LINK_HOST."?reg=1&reg_err=5");
+            else
+            {
+                    $_SESSION['control'] = $res;
+                    header("Location: ".LINK_HOST);
+                    exit;
+            }         
+         }
+        // если же запонены не все поля, отображаем ошибку с просьбой заполнить таки все
+        else header("Location: ".LINK_HOST."?reg=1&reg_err=4");
+        
+        
+    }
+
+
 
 ?>
