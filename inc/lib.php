@@ -155,6 +155,29 @@ function selectGarage()
 	mysqli_free_result($result);
 	return $items;
 }
+//--------Выбор данных с выполненными или невыполненными статусами--------------------
+function selectSts($sts = 1)
+{
+	global $link;
+
+	$sql = "SELECT p.name as pro, t.name, t.status
+	FROM tasks as t
+		RIGHT JOIN projects as p ON t.project_id = p.id
+        ";
+    if($sts) $sql .= "WHERE t.status = 1
+		                   AND t.name IS NOT NULL
+	                       ORDER BY pro";
+    else $sql .= "WHERE t.status = 0
+		              OR t.status IS NULL
+		              AND t.name IS NOT NULL
+	                  ORDER BY pro";
+    
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
 
 //--------Выбор задач-------------------------------------------------
 function selectTasks($idLst = 0, $sts = -1)
