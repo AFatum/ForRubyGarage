@@ -11,120 +11,168 @@
 </head>
 <body>
    <?php
-        $list = selectList();        // получаем количества проектов списков задач
-        $task = selectTasks();       // получение списка задач
-        $uri = $_SERVER['REQUEST_URI']; // берем значение страницы
-        if(!is_array($list))         // если списков нет нужно отобразить сообщение об их отсутствии
-            echo "<p>Please create new List</p>";
-        else                        // если уже есть созданные списки, нужно их отобразить
+        if($_SESSION['control'])
+        //if($_SESSION['control'] or !$_GET['reg'])
         {
-            foreach($list as $lst)          // формирование проекта
+            echo "<p class='login'>Your user's email: ".$_SESSION['control']." - <a href='index.php?log=out' title='logout'>Log out</a></p>";
+            if($_GET['log'] == 'out')    // вылогиниваемся
+                { session_destroy(); header("Location: ".LINK_HOST); }
+            $list = selectList();                           // получаем количества проектов списков задач
+            $task = selectTasks();                          // получение списка задач
+            $uri = $_SERVER['REQUEST_URI'];                 // берем значение страницы
+        if(!is_array($list))                                // если списков нет нужно отобразить сообщение об их отсутствии
+                echo "<p>Please create new List</p>";
+            else                                            // если уже есть созданные списки, нужно их отобразить
             {
-                if($_GET['renameList'] == $lst['id'])
+                foreach($list as $lst)                      // формирование проекта
                 {
-                    $nameList = "<form action='inc/oper.php' method='post'>
-                                <input class='newListNameTxt' type='text' name='newList' placeholder='please enter new project name'>
-                                <input type='hidden' name='idPro' value='".$lst['id']."'>
-                                <input type='hidden' name='oper' value='renameList'>
-                                <input class='AddTaskBut updateList' type='submit' value='update'></form>";
-                }
-                else 
-                    $nameList = $lst['name'];
-                
-                // Опрелеляем ссылку переименования проекта
-                if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['renameList']))
-                    $linkRenameList = "href='httpss://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&renameList=".$lst['id'];
-                else if(!empty($_GET['renameList']))
-                    $linkRenameList = "href='httpss://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
-                else
-                    $linkRenameList = "href='index.php?renameList=".$lst['id'];
-                    
-                echo "<div class='genMod'><div class='listName'><span class='wf'><span class='nav nav1'></span></span>".$nameList."
-                        <div class='wb'><span class='wa'><a class='nav nav1' ".$linkRenameList."'></a></span> | 
-                        <span class='wa'><a class='nav nav2' href='inc/oper.php?deleteList=".$lst['id']."&link=".$uri."'></a></span></div></div>";
-                echo "<div class='newListName'><span class='wr'><span class='nav nav1'></span></span>
-                        <div class='topNewList'>
-                        
-                        <form action='inc/oper.php' method='post'>
-                        <input class='newListNameInputTxt' type='text' name='newTask' placeholder='Start typing here to create a task...'>
-                        <input type='hidden' name='idList' value=".$lst['id'].">
-                        <input type='hidden' name='oper' value='newTask'>
-                        <input class = 'AddTaskBut' type='submit' value='Add Task'></form>
-                    </div></div>";
-                if(is_array($task))
-                {
-                    echo "<table>";
-                    foreach($task as $tsk)                  // формирование списка заданий
-                    {      
-                        if($lst['id'] == $tsk['project_id'])
-                        {
-                            // Опрелеляем ссылку переименования задачи 
-                           if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['updl']) and empty($_GET['updt']))
-                                $linkRenameTask = "href='https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&updl=".$lst['id']."&updt=".$tsk['id'];
-                            else if(!empty($_GET['updl']) and !empty($_GET['updt']))
-                                $linkRenameTask = "href='https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
-                            else
-                                $linkRenameTask = "href='index.php?updl=".$lst['id']."&updt=".$tsk['id'];
-                            
-                            
-                            if($tsk['status'] == 0)
-                            {   $stlTr = NULL;  $stlTr2 = NULL; $nav="nav5";    }
-                            else
-                            {   $stlTr = " class='statusTrue'";  $stlTr2 = " statusTrue"; $nav="nav6";  }
-
-                            if($_GET['updl'] == $lst['id'] and $_GET['updt'] == $tsk['id'])
-                                $taskName = "<td".$stlTr.">  <form action='inc/oper.php' method='post'>
-                                            <input class='newTaskNameTxt' type='text' name='newName' placeholder='please enter new task name'>
-                                            <input type='hidden' name='idTsk' value='".$tsk['id']."'>
-                                            <input type='hidden' name='idPro' value='".$lst['id']."'>
-                                            <input type='hidden' name='oper' value='renameTask'>
-                                            <input class='AddTaskBut update' type='submit' value='update'></form></td>";
-                            else $taskName = "<td".$stlTr.">".$tsk['name']."</td>";
-
-
-                            echo "<tr'><td class='navIc2".$stlTr2."'><a class='nav ".$nav."' href='inc/oper.php?status=1&updl=".$lst['id']."&updt=".$tsk['id']."&sts=".$tsk['status']."&link=".$uri."'></a></td>";
-                            //echo "<td class='td3'></td>";
-                            echo $taskName;
-                            echo "<td class='navIc".$stlTr2."'>
-                                    <span class='wn'><a class='nav nav1' href='inc/oper.php?order=up&updl=".$lst['id']."&updt=".$tsk['id']."&link=".$uri."'></a></span> | 
-                                    <span class='wn'><a class='nav nav2' href='inc/oper.php?order=down&updl=".$lst['id']."&updt=".$tsk['id']."&link=".$uri."'></a></span> |  
-                                    <span class='wn'><a class='nav nav3' ".$linkRenameTask."'></a></span> | 
-                                    <span class='wn'><a class='nav nav4' href='inc/oper.php?uptL=".$lst['id']."&uptT=".$tsk['id']."&link=".$uri."'></a></span>
-                                </td></tr>";
-                        }
+                    if($_GET['renameList'] == $lst['id'])
+                    {
+                        $nameList = "<form action='inc/oper.php' method='post'>
+                                    <input class='newListNameTxt' type='text' name='newList' placeholder='please enter new project name'>
+                                    <input type='hidden' name='idPro' value='".$lst['id']."'>
+                                    <input type='hidden' name='oper' value='renameList'>
+                                    <input class='AddTaskBut updateList' type='submit' value='update'></form>";
                     }
-    
-                echo "</table></div>";
+                    else 
+                        $nameList = $lst['name'];
+
+                    // Определяем ссылку переименования проекта
+                    if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['renameList']))
+                        $linkRenameList = "href='".LINK_HOST.$_SERVER['REQUEST_URI']."&renameList=".$lst['id'];
+                    else if(!empty($_GET['renameList']))
+                        $linkRenameList = "href='".LINK_HOST.$_SERVER['REQUEST_URI'];
+                    else
+                        $linkRenameList = "href='index.php?renameList=".$lst['id'];
+
+                    echo "<div class='genMod'><div class='listName'><span class='wf'><span class='nav nav1'></span></span>".$nameList."
+                            <div class='wb'><span class='wa'><a class='nav nav1' ".$linkRenameList."'></a></span> | 
+                            <span class='wa'><a class='nav nav2' href='inc/oper.php?deleteList=".$lst['id']."&link=".$uri."'></a></span></div></div>";
+                    echo "<div class='newListName'><span class='wr'><span class='nav nav1'></span></span>
+                            <div class='topNewList'>
+
+                            <form action='inc/oper.php' method='post'>
+                            <input class='newListNameInputTxt' type='text' name='newTask' placeholder='Start typing here to create a task...'>
+                            <input type='hidden' name='idList' value=".$lst['id'].">
+                            <input type='hidden' name='oper' value='newTask'>
+                            <input class = 'AddTaskBut' type='submit' value='Add Task'></form>
+                        </div></div>";
+                    if(is_array($task))
+                    {
+                        echo "<table>";
+                        foreach($task as $tsk)                  // формирование списка заданий
+                        {      
+                            if($lst['id'] == $tsk['project_id'])
+                            {
+                                // Опрелеляем ссылку переименования задачи 
+                               if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['updl']) and empty($_GET['updt']))
+                                    $linkRenameTask = "href='".LINK_HOST.$_SERVER['REQUEST_URI']."&updl=".$lst['id']."&updt=".$tsk['id'];
+                                else if(!empty($_GET['updl']) and !empty($_GET['updt']))
+                                    $linkRenameTask = "href='".LINK_HOST.$_SERVER['REQUEST_URI'];
+                                else
+                                    $linkRenameTask = "href='index.php?updl=".$lst['id']."&updt=".$tsk['id'];
+
+
+                                if($tsk['status'] == 0)
+                                {   $stlTr = NULL;  $stlTr2 = NULL; $nav="nav5";    }
+                                else
+                                {   $stlTr = " class='statusTrue'";  $stlTr2 = " statusTrue"; $nav="nav6";  }
+
+                                if($_GET['updl'] == $lst['id'] and $_GET['updt'] == $tsk['id'])
+                                    $taskName = "<td".$stlTr.">  <form action='inc/oper.php' method='post'>
+                                                <input class='newTaskNameTxt' type='text' name='newName' placeholder='please enter new task name'>
+                                                <input type='hidden' name='idTsk' value='".$tsk['id']."'>
+                                                <input type='hidden' name='idPro' value='".$lst['id']."'>
+                                                <input type='hidden' name='oper' value='renameTask'>
+                                                <input class='AddTaskBut update' type='submit' value='update'></form></td>";
+                                else $taskName = "<td".$stlTr.">".$tsk['name']."</td>";
+
+
+                                echo "<tr'><td class='navIc2".$stlTr2."'><a class='nav ".$nav."' href='inc/oper.php?status=1&updl=".$lst['id']."&updt=".$tsk['id']."&sts=".$tsk['status']."&link=".$uri."'></a></td>";
+                                //echo "<td class='td3'></td>";
+                                echo $taskName;
+                                echo "<td class='navIc".$stlTr2."'>
+                                        <span class='wn'><a class='nav nav1' href='inc/oper.php?order=up&updl=".$lst['id']."&updt=".$tsk['id']."&link=".$uri."'></a></span> | 
+                                        <span class='wn'><a class='nav nav2' href='inc/oper.php?order=down&updl=".$lst['id']."&updt=".$tsk['id']."&link=".$uri."'></a></span> |  
+                                        <span class='wn'><a class='nav nav3' ".$linkRenameTask."'></a></span> | 
+                                        <span class='wn'><a class='nav nav4' href='inc/oper.php?uptL=".$lst['id']."&uptT=".$tsk['id']."&link=".$uri."'></a></span>
+                                    </td></tr>";
+                            }
+                        }
+
+                    echo "</table></div>";
+                    }
+
                 }
-            
             }
-        }
-    
-    // Опрелеляем ссылку для отображения формы add2list    
-    if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "add2list")
-        $linkAddList = "href='https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&id=add2list'";
-    else
-        $linkAddList = "href='index.php?id=add2list'";
-    // Опрелеляем ссылку для отображения формы SQLtask
-    if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "SQLtask")
-        $linkSQLtask = "href='https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']."&id=SQLtask'";
-    else
-        $linkSQLtask = "href='index.php?id=SQLtask'";
-    ?>
-    
-    <a class = "AddList" <?= $linkAddList ?> title="Add TODO List">Add TODO List</a>
-    <a class = "AddList sqlTask" <?= $linkSQLtask ?> title="SQL task">SQL task</a>
+
+        // Опрелеляем ссылку для отображения формы add2list    
+        if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "add2list")
+            $linkAddList = "href='".LINK_HOST.$_SERVER['REQUEST_URI']."&id=add2list'";
+        else
+            $linkAddList = "href='index.php?id=add2list'";
+        // Опрелеляем ссылку для отображения формы SQLtask
+        if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "SQLtask")
+            $linkSQLtask = "href='".LINK_HOST.$_SERVER['REQUEST_URI']."&id=SQLtask'";
+        else
+            $linkSQLtask = "href='index.php?id=SQLtask'";
+        ?>
+
+        <a class = "AddList" <?= $linkAddList ?> title="Add TODO List">Add TODO List</a>
+        <a class = "AddList sqlTask" <?= $linkSQLtask ?> title="SQL task">SQL task</a>
 </body>
 </html>
-<?php
-        if($_GET['id'] == "add2list")
-        {
-            ?>
-            <form action="inc/oper.php" method="post">
-                <input class="newListTxt" type="text" name="list" placeholder="Start typing here to create new list">
-                <input type='hidden' name='oper' value='newList'>
-                <input type="submit" value="Create List" class="AddNewList"> 
-            </form>   
-            <?php
+    <?php
+            if($_GET['id'] == "add2list")
+            {
+                ?>
+                <form action="inc/oper.php" method="post">
+                    <input class="newListTxt" type="text" name="list" placeholder="Start typing here to create new list">
+                    <input type='hidden' name='oper' value='newList'>
+                    <input type="submit" value="Create List" class="AddNewList"> 
+                </form>   
+                <?php
+            }
+           require("inc/SQLtask.inc.php"); // подключаем обработчик SQL запросов 
+    } // закрытие блока для залогиненных пользователей (строка 14)
+    else
+    { // если пользователь не авторизирован, выводим форму для логина или регистрации 
+        if(!$_GET['reg'] or $_GET['reg'] < 2) 
+        { // форма логина?>
+         <div class='genMod autoGen'>
+            <div class='listName autoTitle'>Autorization</div>
+            <div class='newListName'>
+                <form method="post" action="inc/oper.php">
+                    <input class="newListNameInputTxt autorization" type="text" placeholder="Please enter your email" name="email"><br>
+                    <input class="newListNameInputTxt autorization" type="password" placeholder="Please enter your password" name="pass"><br>
+                    <input class="AddTaskBut" type="submit" value="login">
+                </form>
+            </div>
+            <?php   if(!empty($_GET['reg_com'])) echo "<p class='user'>User width email: '".$_GET['reg_com']."' was created successfully. You can login.</p>";
+                    if($_GET['reg_err'] == 3) echo "<p class='user_er'>Error User registration: ".mysqli_error($link)."</p>";
+                    if($_GET['reg_err'] == 4) echo "<p class='user_er'>Please complete all fields".mysqli_error($link)."</p>";
+                    if($_GET['reg_err'] == 5) echo "<p class='user_er'>You have entered an invalid username or password</p>"; ?>
+            <a href="index.php?reg=2" title="Registration">Registration</a>
+        </div>  
+        <?php 
         }
-       require("inc/SQLtask.inc.php"); // подключаем обработчик SQL запросов ?>
+        if($_GET['reg'] == 2)
+        { // форма регистрации нового пользователя?> 
+            <div class='genMod autoGen'>
+                <div class='listName autoTitle'>Registration</div>
+                <div class='newListName'>
+                    <form method="post" action="inc/oper.php">
+                        <input class="newListNameInputTxt autorization" type="text" placeholder="Please enter your email" name="r_email"><br>
+                        <input class="newListNameInputTxt autorization" type="password" placeholder="Please enter your password" name="r_pass1"><br>
+                        <input class="newListNameInputTxt autorization" type="password" placeholder="Please enter your password again" name="r_pass2"><br>
+                        <input class="AddTaskBut" type="submit" value="ok">
+                    </form>
+                    <?php   if($_GET['reg_err'] == 1) echo "<span class='pass'>Your data of passwod shoud coincide twice</span>"; 
+                            if($_GET['reg_err'] == 2) echo "<br><span class='pass'>Please complete all fields</span>"; ?>
+                </div>
+                <a href="index.php?reg=1" title="Login">Login</a>
+            </div>
+        <?php 
+        }
+    }
+?>
