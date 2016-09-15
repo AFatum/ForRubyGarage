@@ -162,37 +162,26 @@
                 else  echo "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>"; 
                 echo "</table>";
             }
-            /*if($_SESSION['SQL'] == "statuses") // отображаем задачи соответствующего статуса
+            if($_SESSION['SQL'] == "beginLetter") // отображаем задачи, имена которых начинаются на определнную букву
             {
+                $Let = clear($_SESSION['let']); // получаем заданную букву, на которую будем искать задания
+                $letter = selectLetter1($Let); //получаем массив с задачами, которые начинаются на заданную букву
+                $cnt = 1;
                 echo "<table class='cntTask'>";
                 echo "<tr><th class='numDup'>#</th>";
-                echo "<th class='thGar'>Project Name</th>
-                        <th class='thGar'>Task Name</th>
-                        <th>Status</th></tr>";
-                $sts = (int) abs($_SESSION['sts']);
-                $taskSts = selectTasks(0, $sts);
-                $cnt = 0;
+                echo "<th class='ProNameDup'>Project Name</th>
+                        <th>Task Name</th></tr>";
                 
-                if(count($taskSts) > 0)
+                if(count($letter) > 0)
                 {
-                    foreach($taskSts as $tsts)
-                    {
-                        foreach($list as $lst)
-                        {
-                            if($tsts['project_id'] == $lst['id'])
-                            {
-                                $cnt ++;
-                                if($tsts['status'] > 0) $status = "<span class='com'>is complete</span>";
-                                if($tsts['status'] == 0 or $tsts['status'] == NULL) $status = "<span class='ncom'>is not complete</span>";
-                                //$status = (empty($tsts['status'])) ? "<span class='com'>is complete</span>" : "<span class='ncom'>is not complete</span>";
-                                echo "<tr><td>".$cnt."</td><td>".$lst['name']."</td><td>".$tsts['name']."</td><td>".$status."</td></tr>";
-                            }
-                        }
-                    }   
+                    foreach($letter as $res)
+                    { echo "<tr><td>".$cnt."</td><td>".$res['pro']."</td><td>".$res['name']."</td></tr>"; $cnt ++;}
                 }
-                else  echo "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>"; 
+                else echo "<tr><td colspan=3><strong>Tasks on the letter '".$_SESSION['let']."' is not found.</strong></td></tr>"; 
                 echo "</table>";
-            *//*}
+            }
+            
+            /*
             if($_SESSION['SQL'] == "beginLetter") // отображаем задачи, имена которых начинаются на определнную букву
             {
                 $Let = clear($_SESSION['let']); // получаем заданную букву, на которую будем искать задания
@@ -249,6 +238,7 @@
        
        
        //if($_GET['id'] != "SQLtask" or ($_GET['id'] == 'SQLtask' and count($_GET) > 1)) unset($_SESSION['SQL']); //удаляем переменную за ненадобностью
-       if($_GET['id'] != "SQLtask") unset($_SESSION['SQL']); //удаляем переменную за ненадобностью*/
+       if($_GET['id'] != "SQLtask") unset($_SESSION['SQL']); //удаляем переменную за ненадобностью
+            */
     }
 ?>

@@ -397,27 +397,37 @@ function dubles()
 	mysqli_free_result($result);
 	return $items;
 }
-function selectLetter($id = 0, $let)
+function selectLetter0($let)
 {
     global $link;
     if(!is_string($let)) return false;
     if(!is_int($id)) return false;
     if(strlen($let) > 1) $let = $let{0};
     
-    if($id > 0)
-    {
-        $sql = "SELECT id, name, status, project_id 
-                FROM tasks
-                WHERE name LIKE '".$let."%' 
-                ORDER BY id";
-    }
-    else
-    {
-        $sql = "SELECT id, name 
-                FROM projects
-                WHERE name LIKE '%".$let."%' 
-                ORDER BY id";
-    }
+    $sql = "SELECT id, name, status, project_id 
+            FROM tasks
+            WHERE name LIKE '".$let."%' 
+            ORDER BY id";
+    
+    
+    if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
+
+function selectLetter1($let)
+{
+    global $link;
+    //if(!is_string($let)) return false;
+    //if(strlen($let) > 1) $let = $let{0};
+    
+    $sql = "SELECT p.name as pro, t.name
+                FROM tasks as t
+                    RIGHT JOIN projects as p ON t.project_id = p.id
+                WHERE t.name LIKE '".$let."%' 
+                ORDER BY pro";   
     
     if(!$result = mysqli_query($link, $sql))
 		return false;
