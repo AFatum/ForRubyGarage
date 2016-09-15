@@ -33,13 +33,15 @@
                     //if($ts == 0 or $po != $p['pro_id'])
                     if($po != $p['pro_id'])
                     {
+                        if($po > 0) echo "</table></div>";      // закрываем таблицу и основной div
+                        //if($po > 0 and empty($p['id'])) echo "</div>";              // закрываем таблицу и основной div
                         $po = $p['pro_id'];
                         $ts = 1;
                         if($_GET['renameList'] == $p['pro_id'])
                         {                                       // вставляем форму для переименования листа
                             $nameList = "<form action='inc/oper.php' method='post'>
                                         <input class='newListNameTxt' type='text' name='newList' placeholder='please enter new project name'>
-                                        <input type='hidden' name='idPro' value='".$lst['id']."'>
+                                        <input type='hidden' name='idPro' value='".$p['pro_id']."'>
                                         <input type='hidden' name='oper' value='renameList'>
                                         <input class='AddTaskBut updateList' type='submit' value='update'></form>";
                         }
@@ -65,20 +67,21 @@
                                 <input type='hidden' name='oper' value='newTask'>
                                 <input class = 'AddTaskBut' type='submit' value='Add Task'></form>
                             </div></div>";
+                        echo "<table>";
                     }
                                                                 // формируем список заданий
+                    //if($po == $p['pro_id'])
                     if($po == $p['pro_id'] and !empty($p['id']))
                     {
-                        echo "<table>";
                                                                 // Опрелеляем ссылку переименования задачи 
                        if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['updl']) and empty($_GET['updt']))
                             $linkRenameTask = "href='".LINK_HOST.$_SERVER['REQUEST_URI']."&updl=".$p['pro_id']."&updt=".$p['id'];
                         else if(!empty($_GET['updl']) and !empty($_GET['updt']))
                             $linkRenameTask = "href='".LINK_HOST.$_SERVER['REQUEST_URI'];
                         else
-                            $linkRenameTask = "href='index.php?updl=".$lst['id']."&updt=".$p['id'];
+                            $linkRenameTask = "href='index.php?updl=".$p['pro_id']."&updt=".$p['id'];
                                                                 // Определеяем стили для оформления статусов заданий
-                        if($tsk['status'] == 0)
+                        if($p['status'] == 0)
                         {   $stlTr = NULL;  $stlTr2 = NULL; $nav="nav5";    }
                         else
                         {   $stlTr = " class='statusTrue'";  $stlTr2 = " statusTrue"; $nav="nav6";  }
@@ -100,12 +103,13 @@
                                         <span class='wn'><a class='nav nav1' href='inc/oper.php?order=up&updl=".$p['pro_id']."&updt=".$p['id']."&link=".$uri."'></a></span> | 
                                         <span class='wn'><a class='nav nav2' href='inc/oper.php?order=down&updl=".$p['pro_id']."&updt=".$p['id']."&link=".$uri."'></a></span> |  
                                         <span class='wn'><a class='nav nav3' ".$linkRenameTask."'></a></span> | 
-                                        <span class='wn'><a class='nav nav4' href='inc/oper.php?uptL=".$lst['id']."&uptT=".$p['id']."&link=".$uri."'></a></span>
+                                        <span class='wn'><a class='nav nav4' href='inc/oper.php?uptL=".$p['pro_id']."&uptT=".$p['id']."&link=".$uri."'></a></span>
                                     </td></tr>";            
 
-                        echo "</table></div>";
+                        //echo "</table></div>";
                     }
                 } // конец основного foreach
+                echo "</table></div>";  
             }
                                                                 // Опрелеляем ссылку для отображения формы add2list    
                 if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "add2list")
