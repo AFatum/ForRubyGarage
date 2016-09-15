@@ -111,10 +111,32 @@
                     {   echo "<tr><td>".$c."</td><td>".$res['pro']."</td><td>".$res['name']."</td></tr>";  $c ++;   }
                 }
                 else  echo "<tr><td colspan=3><strong>Tasks is not found!</strong></td></tr>";  
+                echo "</table>";
             }
                 
            
             if($_SESSION['SQL'] == "Garage") // отображаем задачи, которые совпадают с проектом "Гараж" по имени и статусу
+            {
+                $cnt = 1;
+                $garage = selectGarage();    // получаем основной массив со списком заданий
+                echo "<table class='cntTask'>";
+                echo "<tr><th class='numDup'>#</th>";
+                echo "<th class='thGar'>Project Name</th>
+                        <th class='thGar'>Task Name</th>
+                        <th>Status</th></tr>"; 
+                if(count($garage) > 0)
+                {
+                    foreach($garage as $res)
+                    {   // определяем сообщения статуса задания
+                        $sts = (!empty($res['status'])) ? "<span class='com'>is complete</span>" : "<span class='ncom'>is not complete</span>";
+                        echo "<tr><td>".$cnt."</td><td>".$res['pro']."</td><td>".$res['name']."</td><td>".$sts."</td></tr>";  $cnt ++;   
+                    }
+                }
+                else  echo "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>"; 
+                echo "</table>";
+                
+            }
+            /*if($_SESSION['SQL'] == "Garage") // отображаем задачи, которые совпадают с проектом "Гараж" по имени и статусу
             {
                 $idGar = 0;
                 $garage = 0;
@@ -180,7 +202,7 @@
                 
                 
                 echo "</table>";
-            }
+            }*//*
             if($_SESSION['SQL'] == "more10") // отображаем список проектов с 10 и более выполнеными заданиями
             {
                 $cnt = 1;

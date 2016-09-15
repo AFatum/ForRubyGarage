@@ -142,6 +142,19 @@ function select10CompTask()
 	mysqli_free_result($result);
 	return $items;
 }
+//--------Выбор заданий, которые по названию и по статусу совпадают с проектов 'Garage'--------------------
+function selectGarage()
+{
+	global $link;
+
+	$sql = "CALL gar()";
+    
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
 
 //--------Выбор задач-------------------------------------------------
 function selectTasks($idLst = 0, $sts = -1)
