@@ -71,6 +71,36 @@ function selectALL()
 	mysqli_free_result($result);
 	return $items;
 }
+//--------Выбор проектов по количеству заданий--------------------
+function selectCntPro($order = 1)
+{
+	global $link;
+
+	$sql = "SELECT p.name, count(*) as cnt 
+                FROM tasks as t
+                    RIGHT JOIN projects as p ON t.project_id = p.id
+                GROUP BY p.name 
+                ";
+    switch($order)
+    {
+        case 1:
+            $sql .= "ORDER BY cnt DESC"; break;
+        case 2:
+            $sql .= "ORDER BY cnt"; break;
+        case 3:
+            $sql .= "ORDER BY p.name"; break;
+        case 4:
+            $sql .= "ORDER BY p.name DESC"; break;
+        default:
+            $sql .= "ORDER BY cnt DESC"; break;
+    }
+    
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
 
 //--------Выбор задач-------------------------------------------------
 function selectTasks($idLst = 0, $sts = -1)

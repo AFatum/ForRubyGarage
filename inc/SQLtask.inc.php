@@ -79,7 +79,11 @@
                     </div>";
             if($_SESSION['SQL'] == "cntEachPro") // если нужно вывести таблицу проектов, отсортированной по количеству заданий
             {
-                $resCntEcPro = array();
+                if($_GET['sort'] === 'asort')   $resCntEcPro = selectCntPro(1);
+                if($_GET['sort'] === 'arsort')  $resCntEcPro = selectCntPro(2);                
+                if($_GET['sort'] === 'ksort')   $resCntEcPro = selectCntPro(3);                
+                if($_GET['sort'] === 'krsort')  $resCntEcPro = selectCntPro(4); 
+                //$resCntEcPro = selectCntPro();   // получаем массив данных с количеством проектов
                 echo "<table class='cntTask'>";
                 echo "<tr><th>List Name
                 <span class='wn1'><a class='nav nav7' href='inc/SQLtask.php?sort=ksort'></a></span>
@@ -88,34 +92,10 @@
                         <span class='wn1'><a class='nav nav7' href='inc/SQLtask.php?sort=asort'></a></span>
                         <span class='wn1 wn2'><a class='nav nav8' href='inc/SQLtask.php?sort=arsort'></a></span></th>
                         </tr>";
-                foreach($list as $lst)
-                {
-                    foreach($task as $tsk)
-                    {
-                        if($lst['id'] == $tsk['project_id'])
-                        {
-                            if($idPro != $tsk['project_id'])
-                            {
-                                $cnt = 1;
-                                $resCntEcPro[$lst['name']] = $cnt;
-                                $idPro = $tsk['project_id'];
-                                continue;
-                            }
-                            $cnt ++;
-                            $resCntEcPro[$lst['name']] = $cnt;
-                        }
-                    }
-                }
-                // сортируем массив в соответствии с полученными параметрами
-                if($_GET['sort'] === 'asort') asort($resCntEcPro);
-                if($_GET['sort'] === 'arsort') arsort($resCntEcPro);                
-                if($_GET['sort'] === 'ksort') ksort($resCntEcPro);                
-                if($_GET['sort'] === 'krsort') krsort($resCntEcPro);                
-                foreach($resCntEcPro as $key => $rst)
-                    echo "<tr><td>".$key."</td><td class='tdCntTask'>".$rst."</td></tr>";
-                echo "</table>";
-                //unset($_SESSION['SQL']);
-                echo "</div>";
+                foreach($resCntEcPro as $res)
+                    echo "<tr><td>".$res['name']."</td><td class='tdCntTask'>".$res['cnt']."</td></tr>";
+                
+                echo "</table></div>";
             }
             if($_SESSION['SQL'] == "dupTsk") // если нужно вывести таблицу задач с дублирующими именами
             {
