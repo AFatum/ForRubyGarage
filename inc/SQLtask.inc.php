@@ -77,6 +77,22 @@
                         <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get3'></div>
                         </form>
                     </div>";
+            if($_SESSION['SQL'] == "more10") // если нужно вывести таблицу проектов, отсортированной по количеству заданий
+            {
+                echo "<table class='cntTask'>";
+                echo "<tr><th class='numDup'>#</th>
+                        <th>Project ID</th>
+                        <th>Project Name</th>";
+                $cnt = 1;
+                $result = select10CompTask();   // получаем основной массив с десятью и более выполненными заданиями
+                if(count($result) > 0)
+                {
+                    foreach($result as $res)
+                        {echo "<tr><td>".$cnt."</td><td>".$res['id']."</td><td>".$res['name']."</td></tr>"; $cnt ++;}
+                }
+                else echo "<tr><td colspan=3><strong>Projects width 10 complete tasks, is not found!</strong></td></tr>";
+                echo "</table>";
+            }
             if($_SESSION['SQL'] == "cntEachPro") // если нужно вывести таблицу проектов, отсортированной по количеству заданий
             {
                 if($_GET['sort'] === 'asort')   $resCntEcPro = selectCntPro(1);
