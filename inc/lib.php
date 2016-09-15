@@ -51,6 +51,26 @@ function selectList()
 	mysqli_free_result($result);
 	return $items;
 }
+//--------Выбор всех заданий вместе с именами проектов--------------------
+function selectALL()
+{
+	global $link;
+
+	$sql = "SELECT
+                t.id,
+                t.name, 
+                t.status,
+                p.id AS pro_id,
+                p.name AS pro
+            FROM tasks as t
+                RIGHT JOIN projects as p ON t.project_id = p.id
+            ORDER BY pro_id";
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
 
 //--------Выбор задач-------------------------------------------------
 function selectTasks($idLst = 0, $sts = -1)
