@@ -51,6 +51,133 @@ function selectList()
 	mysqli_free_result($result);
 	return $items;
 }
+//--------Выбор всех заданий вместе с именами проектов--------------------
+function selectALL()
+{
+	global $link;
+
+	$sql = "SELECT
+                t.id,
+                t.name, 
+                t.status,
+                p.id AS pro_id,
+                p.name AS pro
+            FROM tasks as t
+                RIGHT JOIN projects as p ON t.project_id = p.id
+            ORDER BY pro_id";
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
+//--------Выбор проектов по количеству заданий--------------------
+function selectCntPro($order = 1)
+{
+	global $link;
+
+	$sql = "SELECT p.name, count(*) as cnt 
+                FROM tasks as t
+                    RIGHT JOIN projects as p ON t.project_id = p.id
+                GROUP BY p.name 
+                ";
+    switch($order)
+    {
+        case 1:
+            $sql .= "ORDER BY cnt DESC"; break;
+        case 2:
+            $sql .= "ORDER BY cnt"; break;
+        case 3:
+            $sql .= "ORDER BY p.name"; break;
+        case 4:
+            $sql .= "ORDER BY p.name DESC"; break;
+        default:
+            $sql .= "ORDER BY cnt DESC"; break;
+    }
+    
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
+//--------Выбор проектов с дублируюшими заданиями--------------------
+function selectDoubleTask()
+{
+	global $link;
+
+	$sql = "SELECT t1.name, p.name as pro
+                FROM tasks as t1
+                    RIGHT JOIN projects as p ON t1.project_id = p.id
+                WHERE EXISTS (SELECT t2.name, count(*) as cnt
+                            FROM tasks as t2
+                            WHERE t1.name = t2.name
+                            GROUP BY t2.name
+                            HAVING cnt > 1
+                )
+                ORDER BY t1.name";
+    
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
+//--------Выбор проектов с 10 и более выполненных заданий--------------------
+function select10CompTask()
+{
+	global $link;
+
+	$sql = "SELECT p.name, p.id, COUNT(*) as cnt
+                FROM tasks as t
+                    RIGHT JOIN projects as p ON t.project_id = p.id
+                WHERE t.status = 1
+                GROUP BY p.name
+                HAVING cnt > 9
+                ORDER BY p.name";
+    
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
+//--------Выбор заданий, которые по названию и по статусу совпадают с проектов 'Garage'--------------------
+function selectGarage()
+{
+	global $link;
+
+	$sql = "CALL gar()";
+    
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
+//--------Выбор данных с выполненными или невыполненными статусами--------------------
+function selectSts($sts = 1)
+{
+	global $link;
+
+	$sql = "SELECT p.name as pro, t.name, t.status
+	FROM tasks as t
+		RIGHT JOIN projects as p ON t.project_id = p.id
+        ";
+    if($sts) $sql .= "WHERE t.status = 1
+		                   AND t.name IS NOT NULL
+	                       ORDER BY pro";
+    else $sql .= "WHERE t.status = 0
+		              OR t.status IS NULL
+		              AND t.name IS NOT NULL
+	                  ORDER BY pro";
+    
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
 
 //--------Выбор задач-------------------------------------------------
 function selectTasks($idLst = 0, $sts = -1)
@@ -255,42 +382,38 @@ function uptOrder2($id1, $id2, $idPro, $up=true)
     }
 }
 
-//==========================================СОРТИРОВКА====================
-function dubles()
+// --------------------выбор данных с определённой первой буквой в имени задания
+function selectLetter1($let)
 {
     global $link;
+    if(!is_string($let)) return false;
+    if(strlen($let) > 1) $let = $let{0};
     
-	$sql = "SELECT id, name
-			FROM tasks
-			GROUP BY name
-            HAVING COUNT(name)>1";
-	if(!$result = mysqli_query($link, $sql))
+    $sql = "SELECT p.name as pro, t.name
+                FROM tasks as t
+                    RIGHT JOIN projects as p ON t.project_id = p.id
+                WHERE t.name LIKE '".$let."%' 
+                ORDER BY pro";   
+    
+    if(!$result = mysqli_query($link, $sql))
 		return false;
 	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
 	mysqli_free_result($result);
 	return $items;
 }
-function selectLetter($id = 0, $let)
+// --------------------выбор данных с определённой первой буквой в имени задания
+function selectLetter2($let)
 {
     global $link;
     if(!is_string($let)) return false;
-    if(!is_int($id)) return false;
     if(strlen($let) > 1) $let = $let{0};
     
-    if($id > 0)
-    {
-        $sql = "SELECT id, name, status, project_id 
-                FROM tasks
-                WHERE name LIKE '".$let."%' 
-                ORDER BY id";
-    }
-    else
-    {
-        $sql = "SELECT id, name 
-                FROM projects
-                WHERE name LIKE '%".$let."%' 
-                ORDER BY id";
-    }
+    $sql = "SELECT p.name, t.name as tsk, COUNT(*) AS cnt
+                FROM tasks as t
+                    RIGHT JOIN projects as p ON t.project_id = p.id
+                WHERE p.name LIKE '%".$let."%'
+                GROUP BY p.name
+                ORDER BY cnt";   
     
     if(!$result = mysqli_query($link, $sql))
 		return false;

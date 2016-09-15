@@ -41,7 +41,6 @@ if(isset($_POST['statuses']) and $_POST['Get4'])
 {
     $_SESSION['SQL'] = "statuses";
     $_SESSION['sts'] = $_POST['statuses'];
-    //echo "Location: ".LINK_HOST."index.php?id=SQLtask";
     header("Location: ".LINK_HOST."/index.php?id=SQLtask");
     exit;
 }

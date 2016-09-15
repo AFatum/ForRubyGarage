@@ -79,7 +79,11 @@
                     </div>";
             if($_SESSION['SQL'] == "cntEachPro") // если нужно вывести таблицу проектов, отсортированной по количеству заданий
             {
-                $resCntEcPro = array();
+                if($_GET['sort'] === 'asort')   $resCntEcPro = selectCntPro(1);
+                if($_GET['sort'] === 'arsort')  $resCntEcPro = selectCntPro(2);                
+                if($_GET['sort'] === 'ksort')   $resCntEcPro = selectCntPro(3);                
+                if($_GET['sort'] === 'krsort')  $resCntEcPro = selectCntPro(4); 
+                //$resCntEcPro = selectCntPro();   // получаем массив данных с количеством проектов
                 echo "<table class='cntTask'>";
                 echo "<tr><th>List Name
                 <span class='wn1'><a class='nav nav7' href='inc/SQLtask.php?sort=ksort'></a></span>
@@ -88,193 +92,52 @@
                         <span class='wn1'><a class='nav nav7' href='inc/SQLtask.php?sort=asort'></a></span>
                         <span class='wn1 wn2'><a class='nav nav8' href='inc/SQLtask.php?sort=arsort'></a></span></th>
                         </tr>";
-                foreach($list as $lst)
-                {
-                    foreach($task as $tsk)
-                    {
-                        if($lst['id'] == $tsk['project_id'])
-                        {
-                            if($idPro != $tsk['project_id'])
-                            {
-                                $cnt = 1;
-                                $resCntEcPro[$lst['name']] = $cnt;
-                                $idPro = $tsk['project_id'];
-                                continue;
-                            }
-                            $cnt ++;
-                            $resCntEcPro[$lst['name']] = $cnt;
-                        }
-                    }
-                }
-                // сортируем массив в соответствии с полученными параметрами
-                if($_GET['sort'] === 'asort') asort($resCntEcPro);
-                if($_GET['sort'] === 'arsort') arsort($resCntEcPro);                
-                if($_GET['sort'] === 'ksort') ksort($resCntEcPro);                
-                if($_GET['sort'] === 'krsort') krsort($resCntEcPro);                
-                foreach($resCntEcPro as $key => $rst)
-                    echo "<tr><td>".$key."</td><td class='tdCntTask'>".$rst."</td></tr>";
-                echo "</table>";
-                //unset($_SESSION['SQL']);
-                echo "</div>";
+                foreach($resCntEcPro as $res)
+                    echo "<tr><td>".$res['name']."</td><td class='tdCntTask'>".$res['cnt']."</td></tr>";
+                
+                echo "</table></div>";
             }
             if($_SESSION['SQL'] == "dupTsk") // если нужно вывести таблицу задач с дублирующими именами
             {
-                $name = NULL;
-                $num = NULL;
-                $dupl = array();
+                $result = selectDoubleTask(); // получаем основной массив данных c дублирующими заданиями
+                $c = 1;
                 echo "<table class='cntTask'>";
                 echo "<tr><th class='numDup'>#</th>";
                 echo "<th class='ProNameDup'>Project Name</th>
                         <th>Task Name</th></tr>";
-     
-                $cntDup = 0;
-                if($dubles = dubles())
+                if(count($result) > 0)
                 {
-                    foreach($task as $tsk)
-                    {
-                        foreach($dubles as $dls)
-                        {
-                            if($tsk['name'] == $dls['name'])
-                            {
-                                foreach($list as $lst)
-                                {
-                                    if($tsk['project_id'] == $lst['id'])
-                                    {
-                                        $cntDup ++;
-                                        $dupl[$lst['name']." (".$cntDup.")"] = $tsk['name'];
-                                        break; 
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    foreach($result as $res)
+                    {   echo "<tr><td>".$c."</td><td>".$res['pro']."</td><td>".$res['name']."</td></tr>";  $c ++;   }
                 }
-                
-                
-                if(count($dupl) > 0) // если найдены совпадения, заполняем таблицу
-                {
-                    if($_GET['sort'] === 'ksortDup') ksort($dupl);                
-                    if($_GET['sort'] === 'krsortDup') krsort($dupl); 
-                    foreach($dupl as $key => $dup)
-                    {
-                        $num ++;
-                        echo "<tr><td>".$num."</td><td>".$key."</td><td>".$dup."</td></tr>";
-                    }
-                }
-                // если же совпадения не найдены, то отображаем соответствующее сообщение:
-                else echo "<tr><td colspan=3><strong>Matches not found in the task name</strong></td></tr>";
-                echo "</table></div>";
+                else  echo "<tr><td colspan=3><strong>Tasks is not found!</strong></td></tr>";  
+                echo "</table>";
             }
+                
+           
             if($_SESSION['SQL'] == "Garage") // отображаем задачи, которые совпадают с проектом "Гараж" по имени и статусу
             {
-                $idGar = 0;
-                $garage = 0;
+                $cnt = 1;
+                $garage = selectGarage();    // получаем основной массив со списком заданий
                 echo "<table class='cntTask'>";
                 echo "<tr><th class='numDup'>#</th>";
                 echo "<th class='thGar'>Project Name</th>
                         <th class='thGar'>Task Name</th>
-                        <th>Status</th></tr>";
-                foreach ($list as $lst)
+                        <th>Status</th></tr>"; 
+                if(count($garage) > 0)
                 {
-                    if($lst['name'] == "Garage")
-                    {   $idGar = $lst['id']; break;    }
-                }
-                if($idGar > 0) $garage = selectTasks($idGar);
-                else    echo "<tr><td colspan=4><strong>Project 'Garage' is not found!</strong></td></tr>";
-                
-                if(is_array($garage))
-                {
-                    $resultTsk = array();
-                    $resultSts = array();
-                    $cnt = 0;
-                    foreach($task as $tsk)
-                    {
-                        if($idGar == $tsk['project_id']) continue;
-                        else
-                        {
-                            foreach($garage as $gar)
-                            {
-                                if($gar['name'] == $tsk['name'])
-                                {
-                                    if((!empty($gar['status']) and !empty($tsk['status'])) or (empty($gar['status']) and empty($tsk['status'])))
-                                    {
-                                        foreach($list as $lst)
-                                        {
-                                            if($lst['id'] == $tsk['project_id'])
-                                            {
-                                                $cnt ++;
-                                                $result[$tsk['id']]['name'] = $tsk['name'];
-                                                $result[$tsk['id']]['status'] = $tsk['status'];
-                                                $result[$tsk['id']]['pro'] = $lst['name'];
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    foreach($garage as $res)
+                    {   // определяем сообщения статуса задания
+                        $sts = (!empty($res['status'])) ? "<span class='com'>is complete</span>" : "<span class='ncom'>is not complete</span>";
+                        echo "<tr><td>".$cnt."</td><td>".$res['pro']."</td><td>".$res['name']."</td><td>".$sts."</td></tr>";  
+                        $cnt ++;   
                     }
-                    
-                    
-                    if(count($result) > 0)
-                    {
-                        echo "<tr><td colspan=4><strong>Project's 'Garage' matches have next tasks:</strong></td></tr>";
-                        $cnt = 0;
-                        foreach($result as $res)
-                        {
-                            $cnt ++;
-                            $sts = (!empty($res['status'])) ? "<span class='com'>is complete</span>" : "<span class='ncom'>is not complete</span>";
-                            echo "<tr><td>".$cnt."</td><td>".$res['pro']."</td><td>".$res['name']."</td><td>".$sts."</td></tr>";
-                        }
-                    }
-                    else  echo "<tr><td colspan=4><strong>Project 'Garage' have't matches!</strong></td></tr>"; 
                 }
-                
-                
+                else  echo "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>"; 
                 echo "</table>";
+                
             }
-            if($_SESSION['SQL'] == "more10") // отображаем список проектов с 10 и более выполнеными заданиями
-            {
-                $cntCmp = 0; // счетчик для подсчёта выполненных задач
-                $result = array(); // результирующий массив
-                echo "<table class='cntTask'>";
-                echo "<tr><th class='numDup'>#</th>";
-                
-                echo "<th class='thGar20'>Project_id</th><th class='ProNameDup40'>Project Name</th>
-                        <th>Count completed tasks</th></tr>";
-                
-                
-                foreach($list as $lst) // формируем итоговый массив для вывода списка проектов
-                {
-                    $cntCmp = 0; // обнуляем счётчик на переборе каждого нового проекта
-                    foreach($task as $tsk)
-                    {
-                        if($tsk['project_id'] == $lst['id'])
-                        {
-                            if(!empty($tsk['status']))
-                            {
-                                $cntCmp ++;
-                                $result[$lst['id']]['cnt'] = $cntCmp;
-                                $result[$lst['id']]['name'] = $lst['name'];
-                            }
-                        }
-                    }
-                }
-                // формируем список проектов с 10 и более выполненных заданий
-                $cnt = 0;
-                if(count($result) > 0)
-                {
-                    foreach($result as $key => $res)
-                    {
-                        if($res['cnt'] >= 10)
-                        {
-                            $cnt ++;
-                            echo "<tr><td>".$cnt."</td><td>".$key."</td><td>".$res['name']."</td><td>".$res['cnt']."</td></tr>";  
-                        }
-                    }
-                }
-                if($cnt == 0) echo "<tr><td colspan=4><strong>Projects with 10 and more completed tasks is not found!</strong></td></tr>";
-                echo "</table>";
-            }           
+            
             if($_SESSION['SQL'] == "statuses") // отображаем задачи соответствующего статуса
             {
                 echo "<table class='cntTask'>";
@@ -283,25 +146,18 @@
                         <th class='thGar'>Task Name</th>
                         <th>Status</th></tr>";
                 $sts = (int) abs($_SESSION['sts']);
-                $taskSts = selectTasks(0, $sts);
-                $cnt = 0;
+                $status = selectSts($sts);  // получаем основной массив данных со статусами
+                $cnt = 1;
                 
-                if(count($taskSts) > 0)
+                if(count($status) > 0)
                 {
-                    foreach($taskSts as $tsts)
+                    foreach ($status as $res)
                     {
-                        foreach($list as $lst)
-                        {
-                            if($tsts['project_id'] == $lst['id'])
-                            {
-                                $cnt ++;
-                                if($tsts['status'] > 0) $status = "<span class='com'>is complete</span>";
-                                if($tsts['status'] == 0 or $tsts['status'] == NULL) $status = "<span class='ncom'>is not complete</span>";
-                                //$status = (empty($tsts['status'])) ? "<span class='com'>is complete</span>" : "<span class='ncom'>is not complete</span>";
-                                echo "<tr><td>".$cnt."</td><td>".$lst['name']."</td><td>".$tsts['name']."</td><td>".$status."</td></tr>";
-                            }
-                        }
-                    }   
+                        if($res['status'] > 0) $s = "<span class='com'>is complete</span>";
+                        if($res['status'] == 0 or $res['status'] == NULL) $s = "<span class='ncom'>is not complete</span>";
+                        echo "<tr><td>".$cnt."</td><td>".$res['pro']."</td><td>".$res['name']."</td><td>".$s."</td></tr>";
+                        $cnt ++;
+                    }
                 }
                 else  echo "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>"; 
                 echo "</table>";
@@ -309,58 +165,47 @@
             if($_SESSION['SQL'] == "beginLetter") // отображаем задачи, имена которых начинаются на определнную букву
             {
                 $Let = clear($_SESSION['let']); // получаем заданную букву, на которую будем искать задания
-                $letter = selectLetter(1, $Let); //получаем массив с задачами, которые начинаются на заданную букву
+                $letter = selectLetter1($Let); //получаем массив с задачами, которые начинаются на заданную букву
+                $cnt = 1;
                 echo "<table class='cntTask'>";
                 echo "<tr><th class='numDup'>#</th>";
                 echo "<th class='ProNameDup'>Project Name</th>
                         <th>Task Name</th></tr>";
-                if(count($letter) > 0) // если есть задачи на заданную букву
+                
+                if(count($letter) > 0)
                 {
-                    $cnt = 0;
-                    foreach($letter as $let)
-                    {
-                        foreach($list as $lst)
-                        {
-                            if($lst['id'] == $let['project_id'])
-                            {
-                                $cnt ++;
-                                echo "<tr><td>".$cnt."</td><td>".$lst['name']."</td><td>".$let['name']."</td></tr>";
-                            }
-                        }
-                    }
+                    foreach($letter as $res)
+                    { echo "<tr><td>".$cnt."</td><td>".$res['pro']."</td><td>".$res['name']."</td></tr>"; $cnt ++;}
                 }
                 else echo "<tr><td colspan=3><strong>Tasks on the letter '".$_SESSION['let']."' is not found.</strong></td></tr>"; 
                 echo "</table>";
             }
+            
             if($_SESSION['SQL'] == "middleLetter") // отображаем задачи, имена которых начинаются на определнную букву
             {
-                $cntTsk = 0;
+                $cnt = 1;
                 $Let = clear($_SESSION['let']); // получаем заданную букву, на которую будем искать задания
-                $letter = selectLetter(0, $Let); //получаем массив с проектами, названия которых содержит заданную букву
+                $letter = selectLetter2($Let); //получаем массив с проектами, названия которых содержит заданную букву
                 echo "<table class='cntTask'>";
                 echo "<tr><th class='numDup'>#</th>";
                 echo "<th>Project Name</th>
                         <th class='numDup'>Count Tasks</th></tr>";
-                if(count($letter) > 0) // если есть проекты с заданной буквой
+                
+                if(count($letter) > 0)
                 {
-                    $cnt = 0;
-                    foreach($letter as $let)
+                    foreach($letter as $res)
                     {
+                        if(is_null($res['tsk'])) 
+                            $c = (int) $res['cnt'] - 1;
+                
+                        else $c = $res['cnt'];
+                        echo "<tr><td>".$cnt."</td><td>".$res['name']."</td><td>".$c."</td></tr>";
                         $cnt ++;
-                        $cntTsk = 0;
-                        foreach($task as $tsk)
-                        {
-                            if($let['id'] == $tsk['project_id']) $cntTsk ++;
-                        }
-                        echo "<tr><td>".$cnt."</td><td>".$let['name']."</td><td>".$cntTsk."</td></tr>";
+                        
                     }
                 }
                 else echo "<tr><td colspan=3><strong>Projects with the letter '".$_SESSION['let']."' is not found.</strong></td></tr>";
                 echo "</table>";
             }
-        }
-       
-       
-       //if($_GET['id'] != "SQLtask" or ($_GET['id'] == 'SQLtask' and count($_GET) > 1)) unset($_SESSION['SQL']); //удаляем переменную за ненадобностью
-       if($_GET['id'] != "SQLtask") unset($_SESSION['SQL']); //удаляем переменную за ненадобностью
+    }
 ?>
