@@ -99,14 +99,26 @@
             }
             if($_SESSION['SQL'] == "dupTsk") // если нужно вывести таблицу задач с дублирующими именами
             {
-                $name = NULL;
-                $num = NULL;
-                $dupl = array();
+                $result = selectDoubleTask(); // получаем основной массив данных c дублирующими заданиями
+                $c = 1;
                 echo "<table class='cntTask'>";
                 echo "<tr><th class='numDup'>#</th>";
                 echo "<th class='ProNameDup'>Project Name</th>
                         <th>Task Name</th></tr>";
-     
+                foreach($result as $res)
+                {   echo "<tr><td>".$c."</td><td>".$res['pro']."</td><td>".$res['name']."</td></tr>";  $c ++;   }
+            }
+                
+            /*  if($_SESSION['SQL'] == "dupTsk") // если нужно вывести таблицу задач с дублирующими именами
+                    {
+                        $name = NULL;
+                        $num = NULL;
+                        $dupl = array();
+                        echo "<table class='cntTask'>";
+                        echo "<tr><th class='numDup'>#</th>";
+                        echo "<th class='ProNameDup'>Project Name</th>
+                                <th>Task Name</th></tr>";
+
                 $cntDup = 0;
                 if($dubles = dubles())
                 {
@@ -144,7 +156,7 @@
                 // если же совпадения не найдены, то отображаем соответствующее сообщение:
                 else echo "<tr><td colspan=3><strong>Matches not found in the task name</strong></td></tr>";
                 echo "</table></div>";
-            }
+            }*/
             if($_SESSION['SQL'] == "Garage") // отображаем задачи, которые совпадают с проектом "Гараж" по имени и статусу
             {
                 $idGar = 0;

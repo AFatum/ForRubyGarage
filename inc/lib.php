@@ -101,6 +101,28 @@ function selectCntPro($order = 1)
 	mysqli_free_result($result);
 	return $items;
 }
+//--------Выбор проектов с дублируюшими заданиями--------------------
+function selectDoubleTask()
+{
+	global $link;
+
+	$sql = "SELECT t1.name, p.name as pro
+                FROM tasks as t1
+                    RIGHT JOIN projects as p ON t1.project_id = p.id
+                WHERE EXISTS (SELECT t2.name, count(*) as cnt
+                            FROM tasks as t2
+                            WHERE t1.name = t2.name
+                            GROUP BY t2.name
+                            HAVING cnt > 1
+                )
+                ORDER BY t1.name";
+    
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
 
 //--------Выбор задач-------------------------------------------------
 function selectTasks($idLst = 0, $sts = -1)
