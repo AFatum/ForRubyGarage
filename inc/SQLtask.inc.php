@@ -181,64 +181,31 @@
                 echo "</table>";
             }
             
-            /*
-            if($_SESSION['SQL'] == "beginLetter") // отображаем задачи, имена которых начинаются на определнную букву
-            {
-                $Let = clear($_SESSION['let']); // получаем заданную букву, на которую будем искать задания
-                $letter = selectLetter(1, $Let); //получаем массив с задачами, которые начинаются на заданную букву
-                echo "<table class='cntTask'>";
-                echo "<tr><th class='numDup'>#</th>";
-                echo "<th class='ProNameDup'>Project Name</th>
-                        <th>Task Name</th></tr>";
-                if(count($letter) > 0) // если есть задачи на заданную букву
-                {
-                    $cnt = 0;
-                    foreach($letter as $let)
-                    {
-                        foreach($list as $lst)
-                        {
-                            if($lst['id'] == $let['project_id'])
-                            {
-                                $cnt ++;
-                                echo "<tr><td>".$cnt."</td><td>".$lst['name']."</td><td>".$let['name']."</td></tr>";
-                            }
-                        }
-                    }
-                }
-                else echo "<tr><td colspan=3><strong>Tasks on the letter '".$_SESSION['let']."' is not found.</strong></td></tr>"; 
-                echo "</table>";
-            }
             if($_SESSION['SQL'] == "middleLetter") // отображаем задачи, имена которых начинаются на определнную букву
             {
-                $cntTsk = 0;
+                $cnt = 1;
                 $Let = clear($_SESSION['let']); // получаем заданную букву, на которую будем искать задания
-                $letter = selectLetter(0, $Let); //получаем массив с проектами, названия которых содержит заданную букву
+                $letter = selectLetter2($Let); //получаем массив с проектами, названия которых содержит заданную букву
                 echo "<table class='cntTask'>";
                 echo "<tr><th class='numDup'>#</th>";
                 echo "<th>Project Name</th>
                         <th class='numDup'>Count Tasks</th></tr>";
-                if(count($letter) > 0) // если есть проекты с заданной буквой
+                
+                if(count($letter) > 0)
                 {
-                    $cnt = 0;
-                    foreach($letter as $let)
+                    foreach($letter as $res)
                     {
+                        if(is_null($res['tsk'])) 
+                            $c = (int) $res['cnt'] - 1;
+                
+                        else $c = $res['cnt'];
+                        echo "<tr><td>".$cnt."</td><td>".$res['name']."</td><td>".$c."</td></tr>";
                         $cnt ++;
-                        $cntTsk = 0;
-                        foreach($task as $tsk)
-                        {
-                            if($let['id'] == $tsk['project_id']) $cntTsk ++;
-                        }
-                        echo "<tr><td>".$cnt."</td><td>".$let['name']."</td><td>".$cntTsk."</td></tr>";
+                        
                     }
                 }
                 else echo "<tr><td colspan=3><strong>Projects with the letter '".$_SESSION['let']."' is not found.</strong></td></tr>";
                 echo "</table>";
             }
-        }
-       
-       
-       //if($_GET['id'] != "SQLtask" or ($_GET['id'] == 'SQLtask' and count($_GET) > 1)) unset($_SESSION['SQL']); //удаляем переменную за ненадобностью
-       if($_GET['id'] != "SQLtask") unset($_SESSION['SQL']); //удаляем переменную за ненадобностью
-            */
     }
 ?>

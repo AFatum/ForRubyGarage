@@ -382,33 +382,18 @@ function uptOrder2($id1, $id2, $idPro, $up=true)
     }
 }
 
-//==========================================СОРТИРОВКА====================
-function dubles()
-{
-    global $link;
-    
-	$sql = "SELECT id, name
-			FROM tasks
-			GROUP BY name
-            HAVING COUNT(name)>1";
-	if(!$result = mysqli_query($link, $sql))
-		return false;
-	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
-	mysqli_free_result($result);
-	return $items;
-}
-function selectLetter0($let)
+// --------------------выбор данных с определённой первой буквой в имени задания
+function selectLetter1($let)
 {
     global $link;
     if(!is_string($let)) return false;
-    if(!is_int($id)) return false;
     if(strlen($let) > 1) $let = $let{0};
     
-    $sql = "SELECT id, name, status, project_id 
-            FROM tasks
-            WHERE name LIKE '".$let."%' 
-            ORDER BY id";
-    
+    $sql = "SELECT p.name as pro, t.name
+                FROM tasks as t
+                    RIGHT JOIN projects as p ON t.project_id = p.id
+                WHERE t.name LIKE '".$let."%' 
+                ORDER BY pro";   
     
     if(!$result = mysqli_query($link, $sql))
 		return false;
@@ -416,18 +401,19 @@ function selectLetter0($let)
 	mysqli_free_result($result);
 	return $items;
 }
-
-function selectLetter1($let)
+// --------------------выбор данных с определённой первой буквой в имени задания
+function selectLetter2($let)
 {
     global $link;
-    //if(!is_string($let)) return false;
-    //if(strlen($let) > 1) $let = $let{0};
+    if(!is_string($let)) return false;
+    if(strlen($let) > 1) $let = $let{0};
     
-    $sql = "SELECT p.name as pro, t.name
+    $sql = "SELECT p.name, t.name as tsk, COUNT(*) AS cnt
                 FROM tasks as t
                     RIGHT JOIN projects as p ON t.project_id = p.id
-                WHERE t.name LIKE '".$let."%' 
-                ORDER BY pro";   
+                WHERE p.name LIKE '%".$let."%'
+                GROUP BY p.name
+                ORDER BY cnt";   
     
     if(!$result = mysqli_query($link, $sql))
 		return false;
