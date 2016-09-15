@@ -123,6 +123,25 @@ function selectDoubleTask()
 	mysqli_free_result($result);
 	return $items;
 }
+//--------Выбор проектов с 10 и более выполненных заданий--------------------
+function select10CompTask()
+{
+	global $link;
+
+	$sql = "SELECT p.name, p.id, COUNT(*) as cnt
+                FROM tasks as t
+                    RIGHT JOIN projects as p ON t.project_id = p.id
+                WHERE t.status = 1
+                GROUP BY p.name
+                HAVING cnt > 9
+                ORDER BY p.name";
+    
+	if(!$result = mysqli_query($link, $sql))
+		return false;
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	mysqli_free_result($result);
+	return $items;
+}
 
 //--------Выбор задач-------------------------------------------------
 function selectTasks($idLst = 0, $sts = -1)

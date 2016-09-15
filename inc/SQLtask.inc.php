@@ -105,58 +105,15 @@
                 echo "<tr><th class='numDup'>#</th>";
                 echo "<th class='ProNameDup'>Project Name</th>
                         <th>Task Name</th></tr>";
-                foreach($result as $res)
-                {   echo "<tr><td>".$c."</td><td>".$res['pro']."</td><td>".$res['name']."</td></tr>";  $c ++;   }
+                if(count($result) > 0)
+                {
+                    foreach($result as $res)
+                    {   echo "<tr><td>".$c."</td><td>".$res['pro']."</td><td>".$res['name']."</td></tr>";  $c ++;   }
+                }
+                else  echo "<tr><td colspan=3><strong>Tasks is not found!</strong></td></tr>";  
             }
                 
-            /*  if($_SESSION['SQL'] == "dupTsk") // если нужно вывести таблицу задач с дублирующими именами
-                    {
-                        $name = NULL;
-                        $num = NULL;
-                        $dupl = array();
-                        echo "<table class='cntTask'>";
-                        echo "<tr><th class='numDup'>#</th>";
-                        echo "<th class='ProNameDup'>Project Name</th>
-                                <th>Task Name</th></tr>";
-
-                $cntDup = 0;
-                if($dubles = dubles())
-                {
-                    foreach($task as $tsk)
-                    {
-                        foreach($dubles as $dls)
-                        {
-                            if($tsk['name'] == $dls['name'])
-                            {
-                                foreach($list as $lst)
-                                {
-                                    if($tsk['project_id'] == $lst['id'])
-                                    {
-                                        $cntDup ++;
-                                        $dupl[$lst['name']." (".$cntDup.")"] = $tsk['name'];
-                                        break; 
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                
-                if(count($dupl) > 0) // если найдены совпадения, заполняем таблицу
-                {
-                    if($_GET['sort'] === 'ksortDup') ksort($dupl);                
-                    if($_GET['sort'] === 'krsortDup') krsort($dupl); 
-                    foreach($dupl as $key => $dup)
-                    {
-                        $num ++;
-                        echo "<tr><td>".$num."</td><td>".$key."</td><td>".$dup."</td></tr>";
-                    }
-                }
-                // если же совпадения не найдены, то отображаем соответствующее сообщение:
-                else echo "<tr><td colspan=3><strong>Matches not found in the task name</strong></td></tr>";
-                echo "</table></div>";
-            }*/
+           
             if($_SESSION['SQL'] == "Garage") // отображаем задачи, которые совпадают с проектом "Гараж" по имени и статусу
             {
                 $idGar = 0;
@@ -226,6 +183,22 @@
             }
             if($_SESSION['SQL'] == "more10") // отображаем список проектов с 10 и более выполнеными заданиями
             {
+                $cnt = 1;
+                $result = select10CompTask();           // получаем массив из 10 выполненными заданиями
+                echo "<table class='cntTask'>";
+                echo "<tr><th class='numDup'>#</th>";
+                
+                echo "<th class='thGar20'>Project_id</th><th class='ProNameDup40'>Project Name</th>
+                        <th>Count completed tasks</th></tr>"; 
+                if(count($result) > 0)
+                {
+                    foreach($result as $res)
+                    {   echo "<tr><td>".$cnt."</td><td>".$res['id']."</td><td>".$res['name']."</td><td>".$res['cnt']."</td></tr>";  $c ++;   }   
+                }
+                else echo "<tr><td colspan=4><strong>Projects with 10 and more completed tasks is not found!</strong></td></tr>";
+            }
+            /*if($_SESSION['SQL'] == "more10") // отображаем список проектов с 10 и более выполнеными заданиями
+            {
                 $cntCmp = 0; // счетчик для подсчёта выполненных задач
                 $result = array(); // результирующий массив
                 echo "<table class='cntTask'>";
@@ -266,7 +239,7 @@
                 }
                 if($cnt == 0) echo "<tr><td colspan=4><strong>Projects with 10 and more completed tasks is not found!</strong></td></tr>";
                 echo "</table>";
-            }           
+            }*/           
             if($_SESSION['SQL'] == "statuses") // отображаем задачи соответствующего статуса
             {
                 echo "<table class='cntTask'>";
