@@ -20,7 +20,7 @@ else
 	define ('DB_LOGIN', 'root');
 	define ('DB_PASS', '');
 	define ('DB_NAME', 'ruby');
-	define ('LINK_HOST', 'http://ruby.ua');
+	define ('LINK_HOST', 'http://garage.loc');
 	$link = mysqli_connect(DB_HOST, DB_LOGIN, DB_PASS, DB_NAME) or die('Ошибка при соединении: '.mysqli_connect_error());
 }
 ?>
