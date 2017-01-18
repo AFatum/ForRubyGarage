@@ -12,7 +12,7 @@ class Oper
   }
   
   // вносим в конструктор класс базы данных
-  function __construct(db $db, $type)
+  function __construct(myDb $db, $type)
   {
     $this->db = $db;
   }
