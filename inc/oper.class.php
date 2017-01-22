@@ -43,7 +43,7 @@ class Oper
   
   function newTask($name, $pro) // ** - создаём новое задание:
   {
-    // *1 - подготавливаем данные для имени листа
+    // *1 - подготавливаем данные для имени задания
     $name = $this->clear($data);
     $pro = (int) abs($pro);
     // *2 - создаём запрос для БД
@@ -66,6 +66,86 @@ class Oper
       { $stmt->close(); return true; }
   } // ** новое задание создано!
   
+  function getList() // ** - получаем список листов заданий:
+  {
+    // *1 - создаём запрос для БД
+    $sql = "SELECT id, name
+			FROM projects
+			ORDER BY id";
+    
+    // *2 - отправялем запрос для БД, если неудача, отлавливаем исключение
+    if(!$result = $this->db->query($sql))
+    {
+      throw new Exception("Ошибка при выборе данных списка листов задания ".$this->db->errno." - ".$this->db->error);
+      return false;
+    }
+    
+    // *3 - формируем массив данных результата и возвращаем его
+    $items = $result->fetch_all(MYSQLI_ASSOC);
+    $result->free(); return $items;
+  } // ** - список листов заданий получен
+  
+  function getAllTasks() // ** - получаем список всех заданий из всех списков
+  {
+    // *1 - создаём запрос для БД
+    $sql = "SELECT
+                t.id,
+                t.name, 
+                t.status,
+                p.id AS pro_id,
+                p.name AS pro
+            FROM tasks as t
+                RIGHT JOIN projects as p ON t.project_id = p.id
+            ORDER BY pro_id";
+    // *2 - отправялем запрос для БД, если неудача, отлавливаем исключение
+    if(!$result = $this->db->query($sql))
+    {
+      throw new Exception("Ошибка при выборе данных списка всех заданий, из всех листов ".$this->db->errno." - ".$this->db->error);
+      return false;
+    }
+    
+    // *3 - формируем массив данных результата и возвращаем его
+    $items = $result->fetch_all(MYSQLI_ASSOC);
+    $result->free(); return $items;
+  } // ** - список всех заданий получен
+
+  function getCntPro($order = 1) // ** - получаем список листов заданий, отсортированные по количеству либо по имени
+  {
+    // *1 - создаём запрос для БД
+    $sql = "SELECT p.name, count(*) as cnt 
+                FROM tasks as t
+                    RIGHT JOIN projects as p ON t.project_id = p.id
+                GROUP BY p.name 
+                ";
+    // *1.1 - определяем метод сортировки, по входящему $order
+    switch($order)
+    {
+        case 1:
+            $sql .= "ORDER BY cnt DESC"; break;
+        case 2:
+            $sql .= "ORDER BY cnt"; break;
+        case 3:
+            $sql .= "ORDER BY p.name"; break;
+        case 4:
+            $sql .= "ORDER BY p.name DESC"; break;
+        default:
+            $sql .= "ORDER BY cnt DESC"; break;
+    }
+    
+    // *2 - отправялем запрос для БД, если неудача, отлавливаем исключение
+    if(!$result = $this->db->query($sql))
+    {
+      throw new Exception("Ошибка при выборе данных отсортированного списка листов заданий ".$this->db->errno." - ".$this->db->error);
+      return false;
+    }
+    
+    // *3 - формируем массив данных результата и возвращаем его
+    $items = $result->fetch_all(MYSQLI_ASSOC);
+    $result->free(); return $items;
+    
+  } // ** - отсортированный список листов получен
+  
+
   
   /* основной метод операций, через который будем всё делать
    здесь если $type == false, значит обрабатывается метод POST
