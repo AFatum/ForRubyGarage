@@ -59,7 +59,7 @@ class Oper
     }
     else // *4 - возвращаем true если внесение данных прошло успешно
       { $stmt->close(); return true; }    
-  } // ** - Данные в БД отправлены!
+  } // ** - Данные в БД - отправлены!
   
   function getSQL($oper, $order=1) // ** - Получаем данные из БД по заданным параметрам
   {
@@ -198,7 +198,118 @@ class Oper
     // *4 - формируем массив данных результата и возвращаем его
     $items = $result->fetch_all(MYSQLI_ASSOC);
     $result->free(); return $items;
-  } // ** - Данные из БД получены
+  } // ** - Данные из БД - получены
+  
+  function updSQL ($id, $idPro, $up=true) // ** - Изменям данные в БД 
+  { // *1 - формируем запрос в БД, в зависимости от выбранной операции
+    if($up === 0 or $up === 1) // *1.1 - меняем статус выполнения задания
+    {
+      // *1.1.1 - фильтруем входящие параметры
+      if(!is_int($id))    $id = (int) abs($id);
+      if(!is_int($idPro)) $idPro = (int) abs($idPro);
+      if(!is_int($up))    $up = (int) abs($up);
+      // *1.1.2 - устанавливаем изменённые значения статусов
+      if($status == 0) $sts = 1;
+      if($status == 1) $sts = 0;
+      
+      // *1.1.3 - формируем запрос в БД
+      $sql1 = "UPDATE tasks
+		      SET
+                status = ".$sts." 
+              WHERE id LIKE ".$id." 
+              AND project_id LIKE ".$idPro;
+      $err = "Ошибка при выполнении запроса в изменении статуса задания: "; $st1 = NULL;
+    }
+    else // *1.2 - меняем порядок заданий
+    {
+      // *1.2.1 - фильтруем входящие параметры
+      if(!is_int($id))    $id = (int) abs($id);
+      if(!is_int($idPro)) $idPro = (int) abs($idPro);
+      if(!is_bool($up))   $up = true;
+      // *1.2.2 - устанавливаем изменённые значения id заданий
+      $ID1=($up) ? $id1 : $idPro; // устанавливаем значение перемещения вверх или вниз..
+      $ID2=($up) ? $idPro : $id1; //.. в зависимости от полученного параметра $up
+      
+      // *1.2.3 - формируем три запроса на изменение данных
+      $sql1 = "UPDATE tasks
+                    SET
+                        id = 11111
+                    WHERE
+                        id LIKE ".$ID1;
+        
+      $sql2 = "UPDATE tasks
+                SET
+                    id = ".$ID1." 
+                WHERE
+                    id LIKE ".$ID2;
+
+      $sql3 = "UPDATE tasks
+                SET
+                    id = ".$ID2." 
+                WHERE
+                    id LIKE 11111";
+      $err = "Ошибка при выполнении запроса на изменение порядка задания";
+      $st1 = " (этап-1): "; $st2 = " (этап-2): "; $st3 = " (этап-3): ";
+    }
+    
+    // *2 - Выполняем запросы и отлавливаем исключения в случае ошибок
+    if(!$result1 = $this->db->query($sql1))
+      {  throw new Exception($err.$st1.$this->db->errno." - ".$this->db->error); return false;  }
+    else if ($up === 0 or $up === 1) return true; // завершаем ф-цию, т.к. здесь успешно изменен именно статус задания
+    
+    else
+    {
+      if(!$result2 = $this->db->query($sql2))
+      {  throw new Exception($err.$st2.$this->db->errno." - ".$this->db->error); return false;  }
+      else
+      {
+        if(!$result3 = $this->db->query($sql3))
+        {  throw new Exception($err.$st3.$this->db->errno." - ".$this->db->error); return false;  }
+        else return true; // успешное изменение порядка заданий
+      }
+    }
+  } // ** - Данные в БД - изменены!
+  
+  function delSQL ($idPro, $id=0) // ** - Удаляем данные из БД
+  { // *1 - Определяем что будем удалять, лист (проект) либо задание
+    if($id == 0) // *1.1 - Удаляем лист заданий - проект
+    {
+      // *1.1.1 - фильтруем входящие данные
+      if(!is_int($idPro)) $idPro = (int) abs($idPro);
+      
+      // *1.1.2 - создаём запрос
+      $sql = "DELETE FROM projects
+            WHERE id LIKE ".$idPro;
+      $err = "Ошибка при удалении списка задания (проекта): ";
+    }
+    
+    else // *1.2 - Удаляем определённое задание из проекта
+    {
+      // *1.2.1 - фильтруем входящие параметры
+      if(!is_int($idPro)) $idPro = (int) abs($idPro);
+      if(!is_int($id) and $id != "all") $id = (int) abs($id);
+      
+      // *1.2.2 - создаём запрос
+      if($id == "all")
+      {
+        $sql = "DELETE FROM tasks
+                  WHERE project_id LIKE ".$idPro;
+        $err = "Ошибка при удалении всех заданий из проекта: ";
+      }
+      else 
+      {
+        $sql = "DELETE FROM tasks
+                  WHERE id LIKE ".$id." 
+                  AND project_id LIKE ".$idPro;
+        $err = "Ошибка при удалении задания из проекта: ";
+      }
+    }
+    
+    // *2 - выполняем запрос
+    if(!$result = $this->db->query($sql))
+      {  throw new Exception($err.$this->db->errno." - ".$this->db->error); return false;  }
+    else return true;
+  } // ** - Данные из БД - удалены!
   
   /* основной метод операций, через который будем всё делать
    здесь если $type == false, значит обрабатывается метод POST
