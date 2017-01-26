@@ -1,6 +1,7 @@
 <?php
 ob_start();		// включаем буферизацию вывода
 session_start(); // стартуем сессию
+require("oper.class.php");
 header ('Content-Type: text/html;charset=utf-8');
 
 
@@ -23,4 +24,5 @@ else
 	define ('LINK_HOST', 'http://garage.loc');
 	$link = mysqli_connect(DB_HOST, DB_LOGIN, DB_PASS, DB_NAME) or die('Ошибка при соединении: '.mysqli_connect_error());
 }
+    $oper = new Oper(new mysqli(DB_HOST, DB_LOGIN, DB_PASS, DB_NAME));
 ?>

@@ -5,10 +5,9 @@ class Oper
   public $db;
 
   // вносим в конструктор класс базы данных
-  function __construct(mysqli $db)
-  {
-    $this->db = $db;
-  }
+  function __construct(mysqli $db)  { $this->db = $db; }
+  
+  //////////--МЕТОДЫ ПО РАБОТЕ С БД И С ПОЛЬЗОВАТЕЛЯМИ--//////////////////////
   
   // подгототавливаем строку к внесению в бд
   function clear($data)
@@ -53,10 +52,7 @@ class Oper
     
     // *3.3 - исполняем подготовленный запрос
     if(!$stmt->execute())
-    {
-      throw new Exception($err.$stmt->errno." - ".$stmt->error);
-      return false;
-    }
+      { throw new Exception($err.$stmt->errno." - ".$stmt->error); return false; }
     else // *4 - возвращаем true если внесение данных прошло успешно
       { $stmt->close(); return true; }    
   } // ** - Данные в БД - отправлены!
@@ -311,6 +307,90 @@ class Oper
     else return true;
   } // ** - Данные из БД - удалены!
   
+  function userExists($login) // ** - Проверяем уже зарегистрированного пользователя
+  {
+    // *1 - фильтруем входящие данные
+    if(!is_string($login)) $login = (string) $login;
+    
+    // *2 - Создаём запрос
+    $sql = "SELECT id, email
+            FROM users
+            ORDER BY id";
+    $err = "Ошибка при получении данных о зарегистрированных пользователей: ";
+    
+    // *3 - Получаем список всех пользователей из запроса
+    if(!$result = $this->db->query($sql))
+      {  throw new Exception($err.$this->db->errno." - ".$this->db->error); return false;  }
+
+	$items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    
+    // *4 - Проверяем есть ли пользователь в БД
+    foreach($items as $data)
+        if($data['email'] === $login) return $login;
+        // если пользователь найден - возвращаем true
+    return false; // если же пользователя нет - возвращаем false
+  } // ** - Проверка на наличие зарегистрированных пользователей - завершена.
+ 
+  function saveUser($login, $hash) // ** - Сохраняем нового пользователя в БД
+  {
+    // *1 - Фильтруем данные
+    $login = $this->clear($login);
+    $hash = $this->clear($hash);
+    
+    // *2 - Создаём запрос
+    $sql = "INSERT INTO users(email, pass) VALUES (?, ?)";
+    $err = "Ошибка при создании подготовительного запроса, при сохранении нового пользователя: ";
+    // *3 - создаём подготовленный запрос 
+    if(!$stmt = $this->db->prepare($sql))
+      // *3.1 - если неудача, кидаем исключение
+      { throw new Exception($err.$stmt->errno." - ".$stmt->error); return false;  }
+    
+    // *4 - Задаём параметры подготовительного запроса
+    $stmt->bind_param("ss", $login, $hash);
+    $err = "Ошибка при исполнении подготовительного запроса, при сохранении нового пользователя: ";
+    
+    // *5 - Исполяем подготовительный запрос, если неудача, отлавливаем исключение
+    if(!$stmt->execute())
+      { throw new Exception($err.$stmt->errno." - ".$stmt->error); return false; }
+    return true; // если же все прошло успешно, возвращаем true
+  } // ** - Данные нового пользователя внесены в БД успешно!
+  
+  function userControl ($login, $pass) // ** - проверка правильного ввода логина/пароля
+  {
+    // *1 - фильтруем данные
+    $login = trim($login);
+    $pass = trim($pass);
+    
+    // *2 - Создаём запрос
+    $sql = "SELECT id, email, pass
+            FROM users
+            ORDER BY id;";
+    $err = "Ошибка при выполнении запроса на проверку логина/пароля пользователя: ";
+    
+    // *3 - отправялем запрос для БД, если неудача, отлавливаем исключение
+    if(!$result = $this->db->query($sql))
+      { throw new Exception($err.$this->db->errno." - ".$this->db->error); return false;  }
+    
+    // *4 - формируем массив данных результата и возвращаем его
+    $items = $result->fetch_all(MYSQLI_ASSOC); $result->free();
+    
+    // *5 - сверяем данные полученные из БД с входящими данными
+    foreach($items as $data)
+    {
+        if($login !== $data['email']) continue; // *5.1 - если логин не совпадает - пропускаем
+        // *5.2 - если пароль верифицирован - возвращаем логин пользователя
+        else if(password_verify($pass, trim($data['pass']))) return trim($data['email']);
+    }
+    return false; // проверка не пройдера
+  } // ** - проверка логина/пароля завершена.
+
+  //////////--МЕТОДЫ ПРЕДСТАВЛЕНИЯ--//////////////////////
+  
+  function autoMess($data) // ** - выводим сообщение про успешную авторизацию
+  { echo "<p class='login'>Your user's email: ".$data." - <a href='index.php?log=out' title='logout'>Log out</a></p>"; } 
+  // ** - сообщение об успешной авторизации выведено
+
+}
   /* основной метод операций, через который будем всё делать
    здесь если $type == false, значит обрабатывается метод POST
    если $type == true, значит метод GET. 
@@ -357,7 +437,7 @@ class Oper
     
     
     
-    if($type)  // обработка GET
+    /*if($type)  // обработка GET
     {
       
     }
@@ -383,6 +463,6 @@ class Oper
   {
     
   }
-}
+}*/
   
 ?>
