@@ -1,11 +1,18 @@
 <?php
 class Oper
 {
-  const HOST = LINK_HOST;
+  //const HOST = LINK_HOST;
+  const HOST = "newIndex.php";
   public $db;
+  public $autoForm;
+  public $autoErr = NULL;
 
   // вносим в конструктор класс базы данных
-  function __construct(mysqli $db)  { $this->db = $db; }
+  function __construct(mysqli $db)  
+  { // ** - вносим первоначальные стандартные параметры: 
+    $this->db = $db;
+    $this->autoForm = ($_GET['reg']) ? $this->formAuto() : $this->formReg();
+  }
   
   //////////--МЕТОДЫ ПО РАБОТЕ С БД И С ПОЛЬЗОВАТЕЛЯМИ--//////////////////////
   
@@ -386,11 +393,173 @@ class Oper
 
   //////////--МЕТОДЫ ПРЕДСТАВЛЕНИЯ--//////////////////////
   
+  // ** - отображаем нужную форму с нужной ошибкой
+  function autoLocation($err=NULL, $reg=false)
+  {
+    // *1 - устанавливаем флаг контроля, пока не будет пройдена авторизация
+    if($_SESSION['control']) unset($_SESSION['control']);
+    // *2 - устанавливаем параметры ошибки, если он есть
+    $this->autoErr = $err;
+    // *3 - устанавливаем параметр нужной для нас формы:
+    $this->autoForm = (!$reg) ? $this->formAuto() : $this->formReg();
+    // *4 - перенаправляем обратно, на главную страницу с обновлёнными параметрами отображения формы
+    //header("Refresh: 1");
+    header("Location: ".self::HOST); 
+    return true;
+  } // ** - параметры формы и ошибки установлены успешно
+  
   function autoMess($data) // ** - выводим сообщение про успешную авторизацию
-  { echo "<p class='login'>Your user's email: ".$data." - <a href='index.php?log=out' title='logout'>Log out</a></p>"; } 
+  { echo "<p class='login'>Your user's email: ".$data." - <a href='newIndex.php?log=out' title='logout'>Log out</a></p>"; } 
   // ** - сообщение об успешной авторизации выведено
+  
+  function formAuto() // ** - формируем форму авторизации
+  { // *1 - формируем html-код для формы
+    $form = "<div class='genMod autoGen'>
+           <div class='listName autoTitle'>Autorization</div>
+            <div class='newListName'>
+                <form method='post' action=''>
+                    <input class='newListNameInputTxt autorization' type='text' placeholder='Please enter your email' name='email'><br>
+                    <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password' name='pass'><br>
+                    <input class='AddTaskBut' type='submit' value='login'>
+                </form>
+            </div>";
+    if($this->autoErr) $form .= $this->autoErr; // *1.1 - отображаем ошибки в форме, если они есть
+    // *1.2 - добавляем окончания формы:
+    $form .= "<a href='newIndex.php?reg=1' title='Registration'>Registration</a></div>";
+    return $form;
+  } // ** - форма авторизации сформирована 
+  
+  function formReg() // ** - формируем форму регистрации
+  {
+    $form = "<div class='genMod autoGen'>
+              <div class='listName autoTitle'>Registration</div>
+              <div class='newListName'>
+                  <form method='post' action=''>
+                      <input class='newListNameInputTxt autorization' type='text' placeholder='Please enter your email' name='r_email'><br>
+                      <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password' name='r_pass1'><br>
+                      <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password again' name='r_pass2'><br>
+                      <input class='AddTaskBut' type='submit' value='ok'>
+                  </form>";
+    if($this->autoErr) $form .= $this->autoErr; // *1.1 - отображаем ошибки в форме, если они есть
+    
+    // *1.2 - добавляем окончания формы:
+    $form .= "<a href='index.php?reg=2' title='Login'>Login</a></div>";
+    return $form;
+  } // ** - форма регистрации сформирована
+  
+  function autorization() // ** - обрабатываем данные из формы авторизации
+  {
+    if(!empty($_POST['email']) and !empty($_POST['pass'])) // *1.1 - если все поля заполнены...
+    {
+      $login = strip_tags($_POST['email']);
+      $pw = strip_tags($_POST['pass']);
+      // *1.1.1 - верифицируем переданные данные
+      $res = $this->userControl($login, $pw);
 
-}
+      if(!$res) // *2.1 - если верификация не пройдена
+      {
+        $err = "<p class='user_er'>You have entered an invalid username or password</p>";
+        return $this->autoLocation($err);
+      }
+      else // *1.1.2 - если верификация таки пройдена
+      {
+        if($this->autoErr) 
+          { $this->autoErr = NULL; $this->autoForm = $this->formAuto(); }
+        $_SESSION['control'] = $res;
+        header("Location: ".self::HOST);
+        return true;
+      }     
+    }
+    
+    // *1.2 - если не все поля заполнены, из формы авторизации...
+    if((!empty($_POST['email']) and empty($_POST['pass'])) or (empty($_POST['email']) and !empty($_POST['pass'])))
+    {
+      $err = "<p class='user_er'>Please complete all fields.</p>";
+      return $this->autoLocation($err);
+    }
+    
+    if($_GET['reg'] == 1) // *1.3 - отображаем форму регистрации нового пользователя
+      return $this->autoLocation(NULL, true);
+      
+    
+    if($_GET['reg'] == 2) // *1.4 - обратно, отображаем форму авторизации нового пользователя
+      return $this->autoLocation();
+    
+  } // ** - параметры из формы авторизации обработаны
+  
+  function registration() // ** - обрабатываем данные из формы регистрации
+  {
+    // *1 - если заполнены все поля то проверяем данные
+    if(!empty($_POST['r_email']) and !empty($_POST['r_pass1']) and !empty($_POST['r_pass2']))
+    {
+      // *1.1 -  если поля паролей на совпадают - нужно отобразить сообщение об этом
+      if($_POST['r_pass1'] != $_POST['r_pass2'])
+      {
+        $err = "<span class='pass'>Your data of passwod shoud coincide twice</span>";
+        return $this->autoLocation($err, true);
+      }
+      // *1.2 -  если поля паролей таки совпадают - обрабатываем данные дальше...
+      else
+      {
+        // *1.2.1 - фильтруем данные
+        $login = $this->clear($_POST['r_email']) ?: $login;
+        // *1.2.2 - если пользователя с таким же email нет...
+        if(!$this->userExists($login))
+        {
+          //$pass = $this->clear($_POST['r_pass1']) ?: $pass;
+          $hash = trim(password_hash($_POST['r_pass1'], PASSWORD_BCRYPT)); // хешируем пароль
+          // *1.2.2.1 - если внесение нового пользователя прошло успешно, переводим на форму авторизации, с замечаниями
+          if($this->saveUser($login, $hash))
+          {
+            $err = "<p class='user'>User width email: '".$login."' was created successfully. You can login.</p>";
+            return $this->autoLocation($err);
+          }
+          // *1.2.2.2 - если внесение нового пользователя произошла ошибка, то перенаправляем обратно на форму реистрации, с замечаниями
+          else
+          {
+            $err = "<p class='user_er'>Error User registration: ".$this->db->error."</p>";
+            return $this->autoLocation($err, true);
+          }
+        }
+        // *1.2.3 - если пользователя с таким же email таки есть...
+        else
+        {
+          $err = "<p class='user_er'>Error User registration: ".$this->db->error."</p>";
+          return $this->autoLocation($err, true);
+        } 
+      }
+    }
+    // *2 - если же не все поля заполнены, отображаем ошибку
+    else
+    {
+      $err = "<br><span class='pass'>Please complete all fields</span>";;
+      return $this->autoLocation($err, true);
+    }
+  } // ** - параметры из формы регистрации обработаны
+  
+  function postAdapter() // ** - адаптер для обработки post-параметров
+  {
+    // *1 - обрабатываем параметры авторизации  
+    if($_POST['email'] or $_POST['pass']) return $this->autorization(); 
+    
+    // *2 - обработка параметров из форммы регистрации
+    if($_POST['r_email'] or $_POST['r_pass1'] or $_POST['r_pass2']) return $this->registration();
+    
+  } // post-параметры - адаптированы  
+  
+  function getAdapter() // ** - адаптер для обработки get-параметров
+  {
+    // *1 - обрабатываем параметры авторизации  
+    //if($_GET['reg']) return $this->autorization(); 
+     if($_GET['reg'] == 1) // *1.3 - отображаем форму регистрации нового пользователя
+      return $this->autoLocation(NULL, true);
+      
+    
+    if($_GET['reg'] == 2) // *1.4 - обратно, отображаем форму авторизации нового пользователя
+      return $this->autoLocation();
+  } // get-параметры - адаптированы  
+  
+} // конец класса
   /* основной метод операций, через который будем всё делать
    здесь если $type == false, значит обрабатывается метод POST
    если $type == true, значит метод GET. 
