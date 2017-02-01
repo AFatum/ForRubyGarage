@@ -6,18 +6,27 @@ class Oper
   public $db;
   public $autoForm;
   public $autoErr;
+  public $user;
 
   // вносим в конструктор класс базы данных
   function __construct(mysqli $db)  
   { // ** - вносим первоначальные стандартные параметры: 
     $this->db = $db;
-    //$this->autoForm = ($_GET['reg']) ? $this->formAuto() : $this->formReg();
+    
+    $this->user = $_SESSION['control_id'] ?: NULL;
     $this->autoErr = $_SESSION['autoErr'] ?: NULL;
-    $this->autoForm = $_SESSION['autoForm'] ?: $this->formAuto();
-    if (($_SESSION['autoForm'] or $_SESSION['autoErr']) and $_SESSION['control']) unset($_SESSION['control']);
+    // *1 - отображаем форму авторизации, если пользоваетль не авторизован
+    if(!$_SESSION['control'])
+    {    
+      if($_SESSION['formReg']) $this->autoForm = $this->formReg();
+      else $this->autoForm = $this->formAuto();
+      if($_SESSION['control_id']) unset($_SESSION['control_id']);
+    }
+    // *2 - если же пользователь авторизован, отображаем ссылку на выход
+    else $this->autoForm = "<p class='login'>Your user's email: ".$_SESSION['control']." - <a href='newIndex.php?log=out' title='logout'>Log out</a></p>";
   }
   
-  //////////--МЕТОДЫ ПО РАБОТЕ С БД И С ПОЛЬЗОВАТЕЛЯМИ--//////////////////////
+  //////////--МЕТОДЫ ПО РАБОТЕ С БД И С ПОЛЬЗОВАТЕЛЯМИ--//////////////////////***********
   
   // подгототавливаем строку к внесению в бд
   function clear($data)
@@ -27,7 +36,11 @@ class Oper
   }
     
   function newSQL ($name, $pro=0) // ** - Отправляем данные в БД
-  {
+  { // *0 - Проверяем есть ли пользователь и вносим параметр в переменную
+    if(!$this->user) 
+      { throw new Exception("Не найден пользователь при удалении данных из БД!"); return false; }
+    else $user = $this->user;
+    
     // *1 - подготавливаем входящие данные
     $name = $this->clear($name);
     $pro = (int) abs($pro);
@@ -35,12 +48,12 @@ class Oper
     // *2 - формируем запрос
     if($pro == 0) // *2.1 - создаём новый лист заданий - проект 
     {
-      $sql = "INSERT INTO projects(name) VALUES (?)";
+      $sql = "INSERT INTO projects(name, user_id) VALUES (?, ?)";
       $err = "Ошибка подготовленного запроса при создании листа: ";
     }
     else // *2.2 - создаём новое задание из выбранного проекта
     {
-      $sql = "INSERT INTO tasks(name, project_id) VALUES (?, ?)";
+      $sql = "INSERT INTO tasks(name, project_id, user_id) VALUES (?, ?, ?)";
       $err = "Ошибка подготовленного запроса при создании задания: ";
     }
     // *3 - создаём подготовленный запрос 
@@ -52,12 +65,12 @@ class Oper
     if($pro == 0) // *3.2.1 - задаём параметры подготовленного запроса и текст ошибки
     {
       $err = "Какая-то ошибка в исполнении подготовленного запроса при создании нового листа: ";
-      $stmt->bind_param('s', $name);
+      $stmt->bind_param('si', $name, $user);
     }
     else
     {
       $err = "Какая-то ошибка в исполнении подготовленного запроса при создании нового задания: ";
-      $stmt->bind_param('si', $name, $pro);
+      $stmt->bind_param('sii', $name, $pro, $user);
     }
     
     // *3.3 - исполняем подготовленный запрос
@@ -73,6 +86,10 @@ class Oper
     if(!is_string($oper)) $oper = (string) $oper;
     if(!is_int($order) and !is_string($order)) $order = 1;
     if(is_string($order) and strlen($order) > 1) $order = $order{0};
+    // *1.1 - Проверяем есть ли пользователь и вносим параметр в переменную
+    if(!$this->user) 
+      { throw new Exception("Не найден пользователь при получении данных из БД!"); return false; }
+    else $user = $this->user;
     
     // *2 - Выбираем нужный для нас запрос в БД
     switch($oper)
@@ -80,6 +97,7 @@ class Oper
       case "getList": // *2.1 - получаем список листов заданий
         $sql = "SELECT id, name
 			FROM projects
+            WHERE user_id = ".$user." 
 			ORDER BY id";
         $err = "Ошибка при выборе данных списка листов задания ";
       break;
@@ -89,10 +107,12 @@ class Oper
                 t.id,
                 t.name, 
                 t.status,
+                t.user_id,
                 p.id AS pro_id,
                 p.name AS pro
             FROM tasks as t
                 RIGHT JOIN projects as p ON t.project_id = p.id
+            WHERE t.user_id = ".$user." 
             ORDER BY pro_id";
         $err = "Ошибка при выборе данных списка всех заданий, из всех листов ";
       break; 
@@ -101,6 +121,7 @@ class Oper
         $sql = "SELECT p.name, count(*) as cnt 
                 FROM tasks as t
                     RIGHT JOIN projects as p ON t.project_id = p.id
+                WHERE t.user_id = ".$user." 
                 GROUP BY p.name 
                 ";
     // *2.3.1 - определяем метод сортировки, по входящему $order
@@ -126,10 +147,12 @@ class Oper
                     RIGHT JOIN projects as p ON t1.project_id = p.id
                 WHERE EXISTS (SELECT t2.name, count(*) as cnt
                             FROM tasks as t2
-                            WHERE t1.name = t2.name
+                            WHERE t1.name = t2.name 
+                            AND t2.user_id = ".$user." 
                             GROUP BY t2.name
                             HAVING cnt > 1
-                )
+                ) 
+                AND t1.user_id = ".$user." 
                 ORDER BY t1.name";
         $err = "Ошибка при выборе данных списка проектов с дублирующими заданиями: ";
       break; 
@@ -138,7 +161,8 @@ class Oper
         $sql = "SELECT p.name, p.id, COUNT(*) as cnt
                 FROM tasks as t
                     RIGHT JOIN projects as p ON t.project_id = p.id
-                WHERE t.status = 1
+                WHERE t.status = 1 
+                AND t.user_id = ".$user." 
                 GROUP BY p.name
                 HAVING cnt > 9
                 ORDER BY p.name";
@@ -146,7 +170,7 @@ class Oper
       break; 
         
       case "getGarage": // *2.6 - Выбор заданий, которые по названию и по статусу совпадают с проектом 'Garage'
-       $sql = "CALL gar()";
+       $sql = "CALL gar(".$user.")";
        $err = "Ошибка при выборе заданий, которые по названию и по статусу совпадают с проектом 'Garage': ";
       break;  
     
@@ -157,13 +181,18 @@ class Oper
                 ";
         // *2.7.1 - Выбор заданий с выполненными статусами
         if($order == 1) $sql .= "WHERE t.status = 1
-		                   AND t.name IS NOT NULL
+		                   AND (t.name IS NOT NULL
+                                AND t.user_id = ".$user.")
 	                       ORDER BY pro";
         // *2.7.2 - Выбор заданий с НЕвыполненными статусами
-        else $sql .= "WHERE t.status = 0
-		              OR t.status IS NULL
-		              AND t.name IS NOT NULL
-	                  ORDER BY pro";
+        else $sql .= "SELECT p.name as pro, t.name, t.status
+                        FROM tasks as t
+                          RIGHT JOIN projects as p ON t.project_id = p.id
+                        WHERE t.user_id = ".$user."
+                        AND (t.name IS NOT NULL
+                             AND (t.status = 0
+                                  OR t.status IS NULL))
+                        ORDER BY pro";
        $err = "Ошибка при выборе заданий, с выполненными или невыполненными статусами: ";
       break; 
     
@@ -176,7 +205,8 @@ class Oper
         $sql = "SELECT p.name as pro, t.name
                 FROM tasks as t
                     RIGHT JOIN projects as p ON t.project_id = p.id
-                WHERE t.name LIKE '".$order."%' 
+                WHERE t.name LIKE '".$order."%'
+                AND t.user_id = ".$user."
                 ORDER BY pro";   
        $err = "Ошибка при выборе заданий, c определенной ПЕРВОЙ буквой в названии: ";
       break; 
@@ -191,6 +221,7 @@ class Oper
                 FROM tasks as t
                     RIGHT JOIN projects as p ON t.project_id = p.id
                 WHERE p.name LIKE '%".$order."%'
+                AND t.user_id = ".$user."
                 GROUP BY p.name
                 ORDER BY cnt";     
        $err = "Ошибка при выборе заданий, c определенной буквой в названии: ";
@@ -207,7 +238,11 @@ class Oper
   } // ** - Данные из БД - получены
   
   function updSQL ($id, $idPro, $up=true) // ** - Изменям данные в БД 
-  { // *1 - формируем запрос в БД, в зависимости от выбранной операции
+  { // *0 - Проверяем есть ли пользователь и вносим параметр в переменную
+    if(!$this->user) 
+      { throw new Exception("Не найден пользователь при редактировании данных в БД!"); return false; }
+    else $user = $this->user;
+    // *1 - формируем запрос в БД, в зависимости от выбранной операции
     if($up === 0 or $up === 1) // *1.1 - меняем статус выполнения задания
     {
       // *1.1.1 - фильтруем входящие параметры
@@ -223,7 +258,8 @@ class Oper
 		      SET
                 status = ".$sts." 
               WHERE id LIKE ".$id." 
-              AND project_id LIKE ".$idPro;
+              AND (project_id LIKE ".$idPro."
+                    AND user_id = ".$user.")";
       $err = "Ошибка при выполнении запроса в изменении статуса задания: "; $st1 = NULL;
     }
     else // *1.2 - меняем порядок заданий
@@ -241,19 +277,22 @@ class Oper
                     SET
                         id = 11111
                     WHERE
-                        id LIKE ".$ID1;
+                        id LIKE ".$ID1."
+                    AND user_id = ".$user;
         
       $sql2 = "UPDATE tasks
                 SET
                     id = ".$ID1." 
                 WHERE
-                    id LIKE ".$ID2;
+                    id LIKE ".$ID2."
+                AND user_id = ".$user;
 
       $sql3 = "UPDATE tasks
                 SET
                     id = ".$ID2." 
                 WHERE
-                    id LIKE 11111";
+                    id LIKE 11111
+                AND user_id = ".$user;
       $err = "Ошибка при выполнении запроса на изменение порядка задания";
       $st1 = " (этап-1): "; $st2 = " (этап-2): "; $st3 = " (этап-3): ";
     }
@@ -277,7 +316,11 @@ class Oper
   } // ** - Данные в БД - изменены!
   
   function delSQL ($idPro, $id=0) // ** - Удаляем данные из БД
-  { // *1 - Определяем что будем удалять, лист (проект) либо задание
+  { // *0 - Проверяем есть ли пользователь и вносим параметр в переменную
+    if(!$this->user) 
+      { throw new Exception("Не найден пользователь при удалении данных из БД!"); return false; }
+    else $user = $this->user;
+    // *1 - Определяем что будем удалять, лист (проект) либо задание
     if($id == 0) // *1.1 - Удаляем лист заданий - проект
     {
       // *1.1.1 - фильтруем входящие данные
@@ -285,7 +328,8 @@ class Oper
       
       // *1.1.2 - создаём запрос
       $sql = "DELETE FROM projects
-            WHERE id LIKE ".$idPro;
+            WHERE id LIKE ".$idPro."
+            AND user_id = ".$user;
       $err = "Ошибка при удалении списка задания (проекта): ";
     }
     
@@ -299,14 +343,16 @@ class Oper
       if($id == "all")
       {
         $sql = "DELETE FROM tasks
-                  WHERE project_id LIKE ".$idPro;
+                  WHERE project_id LIKE ".$idPro."
+                  AND user_id = ".$user;
         $err = "Ошибка при удалении всех заданий из проекта: ";
       }
       else 
       {
         $sql = "DELETE FROM tasks
                   WHERE id LIKE ".$id." 
-                  AND project_id LIKE ".$idPro;
+                  AND (project_id LIKE ".$idPro."
+                        AND user_id = ".$user.")";
         $err = "Ошибка при удалении задания из проекта: ";
       }
     }
@@ -389,33 +435,33 @@ class Oper
     {
         if($login !== $data['email']) continue; // *5.1 - если логин не совпадает - пропускаем
         // *5.2 - если пароль верифицирован - возвращаем логин пользователя
-        else if(password_verify($pass, trim($data['pass']))) return trim($data['email']);
+        //else if(password_verify($pass, trim($data['pass']))) return trim($data['email']);
+        else if(password_verify($pass, trim($data['pass']))) return $data;
     }
     return false; // проверка не пройдера
   } // ** - проверка логина/пароля завершена.
 
   //////////--МЕТОДЫ ПРЕДСТАВЛЕНИЯ--//////////////////////
   
+  // ************** Методы авторизации ***************************************************
   // ** - отображаем нужную форму с нужной ошибкой
   function autoLocation($err=NULL, $reg=false)
   {
     // *1 - устанавливаем флаг контроля, пока не будет пройдена авторизация
     if($_SESSION['control']) unset($_SESSION['control']);
     // *2 - устанавливаем параметры ошибки, если он есть
-    //$this->autoErr = $err;
+
     $_SESSION['autoErr'] = ($err!=NULL) ? $err : NULL;
+    
     // *3 - устанавливаем параметр нужной для нас формы:
-    //$this->autoForm = (!$reg) ? $this->formAuto() : $this->formReg();
-    $_SESSION['autoForm'] = (!$reg) ? $this->formAuto() : $this->formReg();
+    if($reg) $_SESSION['formReg'] = true;
+    else if($_SESSION['formReg']) unset($_SESSION['formReg']);
+    
     // *4 - перенаправляем обратно, на главную страницу с обновлёнными параметрами отображения формы
     //header("Refresh: 1");
     header("Location: ".self::HOST); 
     return true;
   } // ** - параметры формы и ошибки установлены успешно
-  
-  function autoMess($data) // ** - выводим сообщение про успешную авторизацию
-  { echo "<p class='login'>Your user's email: ".$data." - <a href='newIndex.php?log=out' title='logout'>Log out</a></p>"; } 
-  // ** - сообщение об успешной авторизации выведено
   
   function formAuto() // ** - формируем форму авторизации
   { // *1 - формируем html-код для формы
@@ -444,7 +490,7 @@ class Oper
                       <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password' name='r_pass1'><br>
                       <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password again' name='r_pass2'><br>
                       <input class='AddTaskBut' type='submit' value='ok'>
-                  </form>";
+                  </form></div>";
     if($this->autoErr) $form .= $this->autoErr; // *1.1 - отображаем ошибки в форме, если они есть
     
     // *1.2 - добавляем окончания формы:
@@ -466,11 +512,10 @@ class Oper
         $err = "<p class='user_er'>You have entered an invalid username or password</p>";
         return $this->autoLocation($err);
       }
-      else // *1.1.2 - если верификация таки пройдена
+      else // *1.1.2 - если верификация таки пройдена, устанавливаем сессионные переменные
       {
-        if($this->autoErr) 
-          { $this->autoErr = NULL; $this->autoForm = $this->formAuto(); }
-        $_SESSION['control'] = $res;
+        $_SESSION['control'] = trim($res['email']);
+        $_SESSION['control_id'] = (int) abs($res['id']);
         header("Location: ".self::HOST);
         return true;
       }     
@@ -482,16 +527,6 @@ class Oper
       $err = "<p class='user_er'>Please complete all fields.</p>";
       return $this->autoLocation($err);
     }
-    
-/*    if($_GET['reg'] == 1) // *1.3 - отображаем форму регистрации нового пользователя
-      return $this->autoLocation(NULL, true);
-      
-    
-    if($_GET['reg'] == 2) // *1.4 - обратно, отображаем форму авторизации нового пользователя
-      //return $this->autoLocation();
-    {
-      unset($_SE)
-    }*/
     
   } // ** - параметры из формы авторизации обработаны
   
@@ -545,109 +580,57 @@ class Oper
     }
   } // ** - параметры из формы регистрации обработаны
   
+  // ************** Адаптеры, для обработки post- и get-параметров *************************
   function postAdapter() // ** - адаптер для обработки post-параметров
   {
-    // *1 - обрабатываем параметры авторизации  
-    if($_POST['email'] or $_POST['pass']) return $this->autorization(); 
+    if(!$_SESSION['control']) // ** - если пользователь не авторизован
+    {
+      // *1 - обрабатываем параметры авторизации  
+      if($_POST['email'] or $_POST['pass']) return $this->autorization(); 
+
+      // *2 - обработка параметров из форммы регистрации
+      if($_POST['r_email'] or $_POST['r_pass1'] or $_POST['r_pass2']) return $this->registration();
+    } // ** - обработка данных авторизвации - завершено
     
-    // *2 - обработка параметров из форммы регистрации
-    if($_POST['r_email'] or $_POST['r_pass1'] or $_POST['r_pass2']) return $this->registration();
-    
-  } // post-параметры - адаптированы  
+    else // ** - обрабатываем данные авторизированного пользователя
+    {
+      
+    } // ** - данные авторизированного пользователя - обработаны!
+  } // post-параметры - адаптированы
   
   function getAdapter() // ** - адаптер для обработки get-параметров
   {
-    // *1 - обрабатываем параметры авторизации  
-    //if($_GET['reg']) return $this->autorization(); 
-     if($_GET['reg'] == 1) // *1.3 - отображаем форму регистрации нового пользователя
-      //return $this->autoLocation(NULL, true);
-      $this->autoLocation(NULL, true);
-      
-    
-    if($_GET['reg'] == 2) // *1.4 - обратно, отображаем форму авторизации нового пользователя
-    //  return $this->autoLocation();
+    if(!$_SESSION['control']) // ** - если пользователь не авторизован
     {
-      if($_SESSION['control'])  unset($_SESSION['control']);
-      if($_SESSION['autoErr'])  unset($_SESSION['autoErr']);
-      if($_SESSION['autoForm']) unset($_SESSION['autoForm']);
-      header("Location: ".self::HOST); 
-      return true;
-    }
+      if($_GET['reg'] == 1) // *1.3 - отображаем форму регистрации нового пользователя
+      {
+        if($_SESSION['control'])  unset($_SESSION['control']);
+        if($_SESSION['autoErr'])  unset($_SESSION['autoErr']);
+        $_SESSION['formReg'] = true;
+        header("Location: ".self::HOST); 
+        return true;
+      }
+
+      if($_GET['reg'] == 2) // *1.4 - обратно, отображаем форму авторизации нового пользователя
+      {
+        if($_SESSION['control'])    unset($_SESSION['control']);
+        if($_SESSION['autoErr'])    unset($_SESSION['autoErr']);
+        if($_SESSION['formReg'])    unset($_SESSION['formReg']);
+        header("Location: ".self::HOST); 
+        return true;
+      }
+    } // ** - обработка данных авторизвации - завершено
+    
+    else // ** - обрабатываем данные авторизированного пользователя
+    {
+      if($_GET['log'] == 'out')    // вылогиниваемся
+                { session_destroy(); header("Location: ".self::HOST); }
+      
+    } // ** - данные авторизированного пользователя - обработаны!
   } // get-параметры - адаптированы  
   
-} // конец класса
-  /* основной метод операций, через который будем всё делать
-   здесь если $type == false, значит обрабатывается метод POST
-   если $type == true, значит метод GET. 
-  function getOper($oper, $data, $type = false)
-  {
-    if(!$type) // обработка POST
-    {
-      switch($oper)
-      {
-        // ** - создаём новый лист:
-        case "newList":
-          // *1 - подготавливаем данные для имени листа
-          $name = $this->clear($data);
-          // *2 - создаём запрос для БД
-          $sql = "INSERT INTO projects(name) VALUES (?)";
-          // *3 - создаём подготовленный запрос 
-          if(!$stmt = $this->db->prepare($sql))
-          { // *3.1 - если неудача, кидаем исключение
-            throw new Exception("Ошибка подготовленного запроса при создании листа: ".$stmt->errno." - ".$stmt->error);
-            return false;
-          }
-          // *3.2 - задаём параметры в подготовленный запрос
-          $stmt->bind_param('s', $name);
-          // *3.3 - исполняем подготовленный запрос
-          if(!$stmt->execute())
-          {
-            throw new Exception("Какая-то ошибка в исполнении подготовленного запроса при создании нового листа: " . $stmt->errno . " - " . $stmt->error);
-            return false;
-          }
-          else 
-          { $stmt->close(); return true; }
-          return $this->db->newList($name);
-        break; // ** новый лист создан!
-        
-        // ** - создаём новое задание
-        case "newTask":
-          // *1 - подготавливаем данные для имени листа
-          $name = $this->clear($data);
-          // *2 - создаём запрос для БД
-          $sql = "INSERT INTO projects(name) VALUES (?)";
-      }
-    }
-  */
-    
-    
-    
-    /*if($type)  // обработка GET
-    {
-      
-    }
-    
-    
-  }
+  // ************** Методы формирования списка заданий ************************************
   
-    // 
-    if($_POST) 
-    {
-      switch($_POST)
-      {
-        
-      }
-    }
-    
-    if($_GET)
-    {
-      
-    }
-
-  function
-  {
-    
-  }
-}*/
   
+} // конец класса  
 ?>
