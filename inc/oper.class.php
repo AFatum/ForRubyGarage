@@ -5,13 +5,16 @@ class Oper
   const HOST = "newIndex.php";
   public $db;
   public $autoForm;
-  public $autoErr = NULL;
+  public $autoErr;
 
   // вносим в конструктор класс базы данных
   function __construct(mysqli $db)  
   { // ** - вносим первоначальные стандартные параметры: 
     $this->db = $db;
-    $this->autoForm = ($_GET['reg']) ? $this->formAuto() : $this->formReg();
+    //$this->autoForm = ($_GET['reg']) ? $this->formAuto() : $this->formReg();
+    $this->autoErr = $_SESSION['autoErr'] ?: NULL;
+    $this->autoForm = $_SESSION['autoForm'] ?: $this->formAuto();
+    if (($_SESSION['autoForm'] or $_SESSION['autoErr']) and $_SESSION['control']) unset($_SESSION['control']);
   }
   
   //////////--МЕТОДЫ ПО РАБОТЕ С БД И С ПОЛЬЗОВАТЕЛЯМИ--//////////////////////
@@ -399,9 +402,11 @@ class Oper
     // *1 - устанавливаем флаг контроля, пока не будет пройдена авторизация
     if($_SESSION['control']) unset($_SESSION['control']);
     // *2 - устанавливаем параметры ошибки, если он есть
-    $this->autoErr = $err;
+    //$this->autoErr = $err;
+    $_SESSION['autoErr'] = ($err!=NULL) ? $err : NULL;
     // *3 - устанавливаем параметр нужной для нас формы:
-    $this->autoForm = (!$reg) ? $this->formAuto() : $this->formReg();
+    //$this->autoForm = (!$reg) ? $this->formAuto() : $this->formReg();
+    $_SESSION['autoForm'] = (!$reg) ? $this->formAuto() : $this->formReg();
     // *4 - перенаправляем обратно, на главную страницу с обновлёнными параметрами отображения формы
     //header("Refresh: 1");
     header("Location: ".self::HOST); 
@@ -443,7 +448,7 @@ class Oper
     if($this->autoErr) $form .= $this->autoErr; // *1.1 - отображаем ошибки в форме, если они есть
     
     // *1.2 - добавляем окончания формы:
-    $form .= "<a href='index.php?reg=2' title='Login'>Login</a></div>";
+    $form .= "<a href='newIndex.php?reg=2' title='Login'>Login</a></div>";
     return $form;
   } // ** - форма регистрации сформирована
   
@@ -478,12 +483,15 @@ class Oper
       return $this->autoLocation($err);
     }
     
-    if($_GET['reg'] == 1) // *1.3 - отображаем форму регистрации нового пользователя
+/*    if($_GET['reg'] == 1) // *1.3 - отображаем форму регистрации нового пользователя
       return $this->autoLocation(NULL, true);
       
     
     if($_GET['reg'] == 2) // *1.4 - обратно, отображаем форму авторизации нового пользователя
-      return $this->autoLocation();
+      //return $this->autoLocation();
+    {
+      unset($_SE)
+    }*/
     
   } // ** - параметры из формы авторизации обработаны
   
@@ -552,11 +560,19 @@ class Oper
     // *1 - обрабатываем параметры авторизации  
     //if($_GET['reg']) return $this->autorization(); 
      if($_GET['reg'] == 1) // *1.3 - отображаем форму регистрации нового пользователя
-      return $this->autoLocation(NULL, true);
+      //return $this->autoLocation(NULL, true);
+      $this->autoLocation(NULL, true);
       
     
     if($_GET['reg'] == 2) // *1.4 - обратно, отображаем форму авторизации нового пользователя
-      return $this->autoLocation();
+    //  return $this->autoLocation();
+    {
+      if($_SESSION['control'])  unset($_SESSION['control']);
+      if($_SESSION['autoErr'])  unset($_SESSION['autoErr']);
+      if($_SESSION['autoForm']) unset($_SESSION['autoForm']);
+      header("Location: ".self::HOST); 
+      return true;
+    }
   } // get-параметры - адаптированы  
   
 } // конец класса
