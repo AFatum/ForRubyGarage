@@ -15,8 +15,11 @@
         
         try
         {
+          if($_SESSION['control'] and $_SESSION['control_id'])
+            $oper->showPro();
+          
           if($_POST) // ** - обработка параметров POST
-           $oper->postAdapter();
+            $oper->postAdapter();
 
           if($_GET) // ** - обработка параметров GET
             $oper->getAdapter();

@@ -363,6 +363,42 @@ class Oper
     else return true;
   } // ** - Данные из БД - удалены!
   
+  function rnmSQL ($id, $name, $idPro=0) // ** - переименовывем проекты и задания
+  {
+    // *1 - фильтруем данные
+    $id = (int) abs($id);
+    if($idPro > 0) $idPro = (int) abs($idPro);
+    $name = $this->clear($name);
+    // *1.1 - определяем пользователя
+    if(!$this->user) 
+      { throw new Exception("Не найден пользователь при переименовании проекта либо задания"); return false; }
+    else $user = $this->user;
+    // *2.1 - переименовываем лист заданий - проект
+    if(!$idPro) 
+    {
+      $sql = "UPDATE projects
+		      SET
+                name = '".$name."' 
+              WHERE id LIKE ".$id."
+              AND user_id = ".$user;
+      $err = "Ошибка при переименовании листа заданий - проекта: ";
+    }
+    else // *2.2 - переименовываем конкретное задание
+    {
+       $sql = "UPDATE tasks
+		      SET
+                name = '".$name."' 
+              WHERE id LIKE ".$id." 
+              AND (project_id LIKE ".$idPro."
+                    AND user_id = ".$user.")";
+        $err = "Ошибка при переименовании конкретного задания: ";
+    }
+    // *3 - исполняем запрос:
+    if(!$result = $this->db->query($sql))
+        {  throw new Exception($err.$this->db->errno." - ".$this->db->error); return false;  }
+    else header("Location: ".self::HOST); return true;
+  } // ** - проект или задание - переименованы!
+  
   function userExists($login) // ** - Проверяем уже зарегистрированного пользователя
   {
     // *1 - фильтруем входящие данные
@@ -594,9 +630,24 @@ class Oper
     
     else // ** - обрабатываем данные авторизированного пользователя
     {
+      if($_POST['oper'] == "renameList") // ** - переименовываем лист заданий
+      { // *1 - фильтруем данные
+        // *1.1 - если поступили не все данные, возвращаем false
+        if(is_null($_POST['newList']) or !$_POST['idPro']) return false;
+        // *1.2 - если все данные получены - работаем дальше
+        return $this->rnmSQL($_POST['idPro'], $_POST['newList']);
+      } // ** - лист заданий - переименован!
+      
+      if($_POST['oper'] == "renameTask") // ** - переименовываем конкретное задание
+      { // *1 - фильтруем данные
+        // *1.1 - если поступили не все данные, возвращаем false
+        if(is_null($_POST['newName']) or !$_POST['idPro'] or !$_POST['idTsk']) return false;
+        // *1.2 - если все данные получены - работаем дальше
+        return $this->rnmSQL($_POST['idTsk'], $_POST['newName'], $_POST['idPro']);
+      } // ** - конкретное задание - переименовано!
       
     } // ** - данные авторизированного пользователя - обработаны!
-  } // post-параметры - адаптированы
+  } // ** - post-параметры - адаптированы!
   
   function getAdapter() // ** - адаптер для обработки get-параметров
   {
@@ -631,6 +682,133 @@ class Oper
   
   // ************** Методы формирования списка заданий ************************************
   
+  function showPro() // ** - Отображаем список проектов с заданиями
+  {
+    // *1 - фильтруем данные
+    if(!$this->user or $this->user != $_SESSION['control_id'])
+      $this->user = $_SESSION['control_id'];
+    
+    // *2 - получаем список заданий и проектов из БД
+    $arrTsk = $this->getSQL("getAllTasks");
+    // *2.1 - если пришёл пустой архив - отображаем сообщение про создание нового листа заданий
+    if(!is_array($arrTsk) or empty($arrTsk)) 
+    { 
+      //throw new Exception("<p>Ошибка получения данных из БД, при получении полного списка заданий</p>"); 
+      //return false; 
+      echo "<p>Please create new List</p>";
+    }
+    else // *2.2 - если у пользователя уже есть списки заданий, отображаем их
+    {
+      // *2.2.1 - устанавливаем первоначальные параметры для отображения списка
+      $po = 0; $ts = 0;
+      // *2.2.2 - выводи списки заданий
+      foreach($arrTsk as $p)
+      {
+        if($po != $p['pro_id']) // *2.2.2.1 - если есть новый список, отображаем его
+        {
+          if($po > 0) echo "</table></div>";  // *2.2.2.2 - закрываем таблицу и основной div
+          $po = $p['pro_id'];                 // *2.2.2.3 - обновляем индекс номера листа задания
+          $ts = 1;                            // *2.2.2.4 - устанавливаем первый индекс задания
+          // *2.2.2.5 - задаём форму переименования листа заданий, или просто его имя
+          $nameList = ($_GET['renameList'] == $p['pro_id']) ? $this->renameList($p['pro_id']) : $p['pro'];
+          // *2.2.3 - вываодим фрейм проекта со ссылкой добавления нового задания
+          echo $this->headerList($p['pro_id'], $nameList);
+          
+          if($po == $p['pro_id'] and !empty($p['id'])) // *2.2.4 - если в проекте уже есть задания, отображаем их
+          {
+            
+          }
+
+        }
+      }
+    }
+    
+    
+  }
+  
+  function renameList($id) // ** - форма переименования листа
+  {
+    if(!is_int($id)) $id = (int) abs($id);
+    $nameList = "<form action='' method='post'>
+                <input class='newListNameTxt' type='text' name='newList' placeholder='please enter new project name'>
+                <input type='hidden' name='idPro' value='".$id."'>
+                <input type='hidden' name='oper' value='renameList'>
+                <input class='AddTaskBut updateList' type='submit' value='update'></form>";
+    return $nameList;
+  } // ** - форма переименования листа - создана
+  
+  function renameTask($id) {}// ** - форма переименования задания
+  
+  // ** - формируем ссылку переименования проектов/заданий или..
+  // .. для отображения форм "add2list", "SQLtask"
+  function smartLink($id=0, $idPro=0)
+  { // *0 - фильтруем данные
+    if($id and !is_int($id)) $id = (int) abs($id); 
+    if($idPro and !is_int($idPro)) $idPro = (int) abs($idPro); 
+    // *1 - формируем ссылку для переименования листа заданий
+    if($id and !$idPro)
+    { // *1.1 - формируем ссылку, если уже есть параметры GET и нет параметра $_GET['renameList']
+      if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['renameList']))
+          $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&renameList=".$id;
+      // *1.2 - формируем ссылку, если нет параметров GET и есть параметр $_GET['renameList']
+      else if(!empty($_GET['renameList'])) $link = "href='".self::HOST.$_SERVER['REQUEST_URI'];
+      // *1.3 - формируем ссылку, если нет параметров GET и нет параметра $_GET['renameList']
+      else $link = "href='".self::HOST."?renameList=".$id;
+    }
+    
+    // *2 - формируем ссылку для переименования задания
+    if($id and $idPro)
+    { // *2.1 - формируем ссылку, если уже есть параметры GET и нет параметров $_GET['updl'] и $_GET['updt']
+      if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['updl']) and empty($_GET['updt']))
+          $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&updl=".$idPro."&updt=".$id;
+      // *2.2 - формируем ссылку, если нет параметров GET и есть параметры $_GET['updl'] и $_GET['updt']
+      else if(!empty($_GET['updl']) and !empty($_GET['updt'])) $link = "href='".self::HOST.$_SERVER['REQUEST_URI'];
+      // *2.3 - формируем ссылку, если нет параметров GET и нет параметров $_GET['updl'] и $_GET['updt']
+      else $link = "href='".self::HOST."?updl=".$idPro."&updt=".$id;
+    }
+    
+    // *3 - формируем ссылку для отображения формы "add2list"
+    if($id == "add2list")
+    { // *3.1 - формируем ссылку, если уже есть параметры GET и параметр $_GET['id'] не равен "add2list"
+      if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "add2list")
+          $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&id=add2list'";
+      // *3.2 - формируем ссылку, если нет параметров GET и параметр $_GET['id'] таки равен "add2list"
+      else $link = "href='".self::HOST."?id=add2list'";
+    }
+    
+     // *4 - формируем ссылку для отображения формы "SQLtask"
+    if($id == "SQLtask")
+    { // *4.1 - формируем ссылку, если уже есть параметры GET и параметр $_GET['id'] не равен "SQLtask"
+      if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "SQLtask")
+            $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&id=SQLtask'";
+      // *4.2 - формируем ссылку, если нет параметров GET и параметр $_GET['id'] таки равен "SQLtask"
+      else $link = "href='".self::HOST."?id=SQLtask'";
+    } 
+    // *5 - возвращаем итоговую ссылку
+    return $link;
+  } // ** - ссылка сформирована!
+  
+  // ** - формируем шапку проекта со ссылкой добавления нового задания 
+  function headerList($id, $name)
+  {
+    // *1 - фильтруем данные
+    if(!is_int($id)) $id = (int) abs($id);
+    $link = $this->smartLink($id);
+    $uri = $_SERVER['REQUEST_URI'];
+        
+    $form = "<div class='genMod'><div class='listName'><span class='wf'><span class='nav nav1'></span></span>".$name."
+              <div class='wb'><span class='wa'><a class='nav nav1' ".$link."'></a></span> | 
+              <span class='wa'><a class='nav nav2' href='inc/oper.php?deleteList=".$id."&link=".$uri."'></a></span></div></div>";
+    $form .= "<div class='newListName'><span class='wr'><span class='nav nav1'></span></span>
+            <div class='topNewList'>
+              <form action='inc/oper.php' method='post'>
+                <input class='newListNameInputTxt' type='text' name='newTask' placeholder='Start typing here to create a task...'>
+                <input type='hidden' name='idList' value=".$id.">
+                <input type='hidden' name='oper' value='newTask'>
+                <input class = 'AddTaskBut' type='submit' value='Add Task'></form>
+        </div></div><table>";
+    return $form;
+  } // ** - шапка проекта сформирована!
   
 } // конец класса  
 ?>
