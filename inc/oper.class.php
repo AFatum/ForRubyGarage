@@ -242,33 +242,40 @@ class Oper
     $result->free(); return $items;
   } // ** - Данные из БД - получены
   
-  function updSQL ($id, $idPro, $up=true) // ** - Изменям данные в БД 
-  { // *0 - Проверяем есть ли пользователь и вносим параметр в переменную
+  function updSts($id, $idPro, $status) // ** - изменяем статус задания
+  {
+    // *0 - Проверяем есть ли пользователь и вносим параметр в переменную
     if(!$this->user) 
-      { throw new Exception("Не найден пользователь при редактировании данных в БД!"); return false; }
+      { throw new Exception("Не найден пользователь при изменении статуса задания в БД!"); return false; }
     else $user = $this->user;
-    // *1 - формируем запрос в БД, в зависимости от выбранной операции
-    if($up === 0 or $up === 1 or is_null($up)) // *1.1 - меняем статус выполнения задания
-    {
-      // *1.1.1 - фильтруем входящие параметры
-      if(!is_int($id))    $id = (int) abs($id);
-      if(!is_int($idPro)) $idPro = (int) abs($idPro);
-      if(!is_int($up))    $up = (int) abs($up);
-      // *1.1.2 - устанавливаем изменённые значения статусов
-      if($status == 0) $sts = 1;
-      if($status == 1) $sts = 0;
-      
-      // *1.1.3 - формируем запрос в БД
-      $sql1 = "UPDATE tasks
+    
+    // *1.1.1 - фильтруем входящие параметры
+    if(!is_int($id))    $id = (int) abs($id);
+    if(!is_int($idPro)) $idPro = (int) abs($idPro);
+    if(!is_int($status)) $status = (int) abs($status);
+    // *1.1.2 - устанавливаем изменённые значения статусов
+    if($status == 0) $sts = 1;
+    if($status == 1) $sts = 0;
+    // *1.1.3 - формируем запрос в БД
+      $sql = "UPDATE tasks
 		      SET
                 status = ".$sts." 
               WHERE id LIKE ".$id." 
               AND (project_id LIKE ".$idPro."
                     AND user_id = ".$user.")";
-      $err = "Ошибка при выполнении запроса в изменении статуса задания: "; $st1 = NULL;
-    }
-    else // *1.2 - меняем порядок заданий
-    {
+      $err = "Ошибка при выполнении запроса в изменении статуса задания: ";
+    
+     if(!$result = $this->db->query($sql))
+        {  throw new Exception($err.$this->db->errno." - ".$this->db->error); return false;  }
+      else return true; // успешное изменение порядка заданий 
+  } // ** - статус задания - изменяем!
+  
+  function updSQL ($id, $idPro, $up=true) // ** - Изменям данные в БД 
+  { // *0 - Проверяем есть ли пользователь и вносим параметр в переменную
+    if(!$this->user) 
+      { throw new Exception("Не найден пользователь при редактировании данных в БД!"); return false; }
+    else $user = $this->user;
+
       // *1.2.1 - фильтруем входящие параметры
       if(!is_int($id))    $id = (int) abs($id);
       if(!is_int($idPro)) $idPro = (int) abs($idPro);
@@ -300,8 +307,7 @@ class Oper
                 AND user_id = ".$user;
       $err = "Ошибка при выполнении запроса на изменение порядка задания";
       $st1 = " (этап-1): "; $st2 = " (этап-2): "; $st3 = " (этап-3): ";
-    }
-    
+  
     // *2 - Выполняем запросы и отлавливаем исключения в случае ошибок
     if(!$result1 = $this->db->query($sql1))
       {  throw new Exception($err.$st1.$this->db->errno." - ".$this->db->error); return false;  }
@@ -704,8 +710,8 @@ class Oper
       if($_GET['status'] == 1) // *4 - меняем статус задания
       {        
         if(!$_GET['updl'] or !$_GET['updt']) return false;
-        if($this->updSQL($_GET['updt'], $_GET['updl'], $_GET['sts']))
-             {  header("Location: ".self::HOST.$_GET['link']); return true; }
+        if($this->updSts($_GET['updt'], $_GET['updl'], $_GET['sts']))
+             {  header("Location: ".self::HOST); return true; }
         else return false;
       }
       
@@ -721,7 +727,7 @@ class Oper
           if(!$next = $this->more($_GET['updt'], $_GET['updl'])) return false;
           // *5.1.2 - передвигаем задание выше
           if($this->updSQL($_GET['updt'], $next))
-            {  header("Location: ".self::HOST.$_GET['link']); return true; }
+            {  header("Location: ".self::HOST); return true; }
           else return false;
         }
         // *5.2 - если нужно передвинуть задание НИЖЕ
@@ -731,7 +737,7 @@ class Oper
           if(!$next = $this->more($_GET['updt'], $_GET['updl'], false)) return false;
           // *5.2.2 - передвигаем задание НИЖЕ
           if($this->updSQL($_GET['updt'], $next, false))
-            {  header("Location: ".self::HOST.$_GET['link']); return true; }
+            {  header("Location: ".self::HOST); return true; }
           else return false;
         }
         
@@ -936,7 +942,7 @@ class Oper
     // *2 - проверяем самый большой/малый id задания
     foreach($this->allTasks as $p)
     {
-      if($p['project_id'] == $idPro)
+      if($p['pro_id'] == $idPro)
       {
         // *2.1 - если у задания наибольшой id, значит по приоритету оно самое низкое
         if(($id >= $p['id']) and !$up) continue; 
