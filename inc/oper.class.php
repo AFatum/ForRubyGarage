@@ -7,6 +7,7 @@ class Oper
   public $autoForm;
   public $autoErr;
   public $user;
+  public $allTasks;
 
   // вносим в конструктор класс базы данных
   function __construct(mysqli $db)  
@@ -23,7 +24,11 @@ class Oper
       if($_SESSION['control_id']) unset($_SESSION['control_id']);
     }
     // *2 - если же пользователь авторизован, отображаем ссылку на выход
-    else $this->autoForm = "<p class='login'>Your user's email: ".$_SESSION['control']." - <a href='newIndex.php?log=out' title='logout'>Log out</a></p>";
+    else
+    {
+      $this->autoForm = "<p class='login'>Your user's email: ".$_SESSION['control']." - <a href='".self::HOST."?log=out' title='logout'>Log out</a></p>";
+      $this->allTasks = $this->getSQL("getAllTasks");
+    }
   }
   
   //////////--МЕТОДЫ ПО РАБОТЕ С БД И С ПОЛЬЗОВАТЕЛЯМИ--//////////////////////***********
@@ -38,7 +43,7 @@ class Oper
   function newSQL ($name, $pro=0) // ** - Отправляем данные в БД
   { // *0 - Проверяем есть ли пользователь и вносим параметр в переменную
     if(!$this->user) 
-      { throw new Exception("Не найден пользователь при удалении данных из БД!"); return false; }
+      { throw new Exception("Не найден пользователь при добавлении задания или проекта в БД!"); return false; }
     else $user = $this->user;
     
     // *1 - подготавливаем входящие данные
@@ -243,7 +248,7 @@ class Oper
       { throw new Exception("Не найден пользователь при редактировании данных в БД!"); return false; }
     else $user = $this->user;
     // *1 - формируем запрос в БД, в зависимости от выбранной операции
-    if($up === 0 or $up === 1) // *1.1 - меняем статус выполнения задания
+    if($up === 0 or $up === 1 or is_null($up)) // *1.1 - меняем статус выполнения задания
     {
       // *1.1.1 - фильтруем входящие параметры
       if(!is_int($id))    $id = (int) abs($id);
@@ -512,7 +517,7 @@ class Oper
             </div>";
     if($this->autoErr) $form .= $this->autoErr; // *1.1 - отображаем ошибки в форме, если они есть
     // *1.2 - добавляем окончания формы:
-    $form .= "<a href='newIndex.php?reg=1' title='Registration'>Registration</a></div>";
+    $form .= "<a href='".self::HOST."?reg=1' title='Registration'>Registration</a></div>";
     return $form;
   } // ** - форма авторизации сформирована 
   
@@ -530,10 +535,10 @@ class Oper
     if($this->autoErr) $form .= $this->autoErr; // *1.1 - отображаем ошибки в форме, если они есть
     
     // *1.2 - добавляем окончания формы:
-    $form .= "<a href='newIndex.php?reg=2' title='Login'>Login</a></div>";
+    $form .= "<a href='".self::HOST."?reg=2' title='Login'>Login</a></div>";
     return $form;
   } // ** - форма регистрации сформирована
-  
+
   function autorization() // ** - обрабатываем данные из формы авторизации
   {
     if(!empty($_POST['email']) and !empty($_POST['pass'])) // *1.1 - если все поля заполнены...
@@ -635,7 +640,9 @@ class Oper
         // *1.1 - если поступили не все данные, возвращаем false
         if(is_null($_POST['newList']) or !$_POST['idPro']) return false;
         // *1.2 - если все данные получены - работаем дальше
-        return $this->rnmSQL($_POST['idPro'], $_POST['newList']);
+        if($this->rnmSQL($_POST['idPro'], $_POST['newList']))
+          { header("Location: ".self::HOST); return true; }
+        else return false;
       } // ** - лист заданий - переименован!
       
       if($_POST['oper'] == "renameTask") // ** - переименовываем конкретное задание
@@ -643,8 +650,18 @@ class Oper
         // *1.1 - если поступили не все данные, возвращаем false
         if(is_null($_POST['newName']) or !$_POST['idPro'] or !$_POST['idTsk']) return false;
         // *1.2 - если все данные получены - работаем дальше
-        return $this->rnmSQL($_POST['idTsk'], $_POST['newName'], $_POST['idPro']);
-      } // ** - конкретное задание - переименовано!
+        if($this->rnmSQL($_POST['idTsk'], $_POST['newName'], $_POST['idPro']))
+          { header("Location: ".self::HOST); return true; }
+        else return false;
+      } // ** - конкретное задание - переименовано!  
+      
+      if($_POST['oper'] == "newTask") // ** - добавляем новое задание
+      {
+        if(!$_POST['newTask'] or !$_POST['idList']) return false;
+        if($this->newSQL($_POST['newTask'], $_POST['idList']))
+          { header("Location: ".self::HOST); return true; }
+        else return false;
+      } // ** - новое задание - добавлено!
       
     } // ** - данные авторизированного пользователя - обработаны!
   } // ** - post-параметры - адаптированы!
@@ -653,7 +670,7 @@ class Oper
   {
     if(!$_SESSION['control']) // ** - если пользователь не авторизован
     {
-      if($_GET['reg'] == 1) // *1.3 - отображаем форму регистрации нового пользователя
+      if($_GET['reg'] == 1) // *1 - отображаем форму регистрации нового пользователя
       {
         if($_SESSION['control'])  unset($_SESSION['control']);
         if($_SESSION['autoErr'])  unset($_SESSION['autoErr']);
@@ -662,7 +679,7 @@ class Oper
         return true;
       }
 
-      if($_GET['reg'] == 2) // *1.4 - обратно, отображаем форму авторизации нового пользователя
+      if($_GET['reg'] == 2) // *2 - обратно, отображаем форму авторизации нового пользователя
       {
         if($_SESSION['control'])    unset($_SESSION['control']);
         if($_SESSION['autoErr'])    unset($_SESSION['autoErr']);
@@ -675,8 +692,50 @@ class Oper
     else // ** - обрабатываем данные авторизированного пользователя
     {
       if($_GET['log'] == 'out')    // вылогиниваемся
-                { session_destroy(); header("Location: ".self::HOST); }
+        { session_destroy(); header("Location: ".self::HOST); }
       
+      if($_GET['deleteList']) // *3 - удаляем лист задание
+      {      
+        if($this->delSQL($_GET['deleteList'], "all") and ($this->delSQL($_GET['deleteList'])))
+           {  header("Location: ".self::HOST.$_GET['link']); return true; }
+        else return false;
+      } // *3* - лист заданий - удалён!
+           
+      if($_GET['status'] == 1) // *4 - меняем статус задания
+      {        
+        if(!$_GET['updl'] or !$_GET['updt']) return false;
+        if($this->updSQL($_GET['updt'], $_GET['updl'], $_GET['sts']))
+             {  header("Location: ".self::HOST.$_GET['link']); return true; }
+        else return false;
+      }
+      
+      if($_GET['order']) // *5 - меняем порядок задания
+      {
+        if(!$_GET['updl'] or !$_GET['updt']) return false;
+        if(!is_array($this->allTasks) or empty($this->allTasks)) return false;
+
+        // *5.1 - если нужно передвинуть задание выше
+        if($_GET['order'] == "up")
+        {
+          // *5.1.1 - определяем id задание которое выше, если такого нет, то возвращаем false
+          if(!$next = $this->more($_GET['updt'], $_GET['updl'])) return false;
+          // *5.1.2 - передвигаем задание выше
+          if($this->updSQL($_GET['updt'], $next))
+            {  header("Location: ".self::HOST.$_GET['link']); return true; }
+          else return false;
+        }
+        // *5.2 - если нужно передвинуть задание НИЖЕ
+        if($_GET['order'] == "down")
+        {
+          // *5.2.1 - определяем id задание которое ниже, если такого нет, то возвращаем false
+          if(!$next = $this->more($_GET['updt'], $_GET['updl'], false)) return false;
+          // *5.2.2 - передвигаем задание НИЖЕ
+          if($this->updSQL($_GET['updt'], $next, false))
+            {  header("Location: ".self::HOST.$_GET['link']); return true; }
+          else return false;
+        }
+        
+      }
     } // ** - данные авторизированного пользователя - обработаны!
   } // get-параметры - адаптированы  
   
@@ -689,9 +748,9 @@ class Oper
       $this->user = $_SESSION['control_id'];
     
     // *2 - получаем список заданий и проектов из БД
-    $arrTsk = $this->getSQL("getAllTasks");
+    //$arrTsk = $this->getSQL("getAllTasks");
     // *2.1 - если пришёл пустой архив - отображаем сообщение про создание нового листа заданий
-    if(!is_array($arrTsk) or empty($arrTsk)) 
+    if(!is_array($this->allTasks) or empty($this->allTasks)) 
     { 
       //throw new Exception("<p>Ошибка получения данных из БД, при получении полного списка заданий</p>"); 
       //return false; 
@@ -702,7 +761,7 @@ class Oper
       // *2.2.1 - устанавливаем первоначальные параметры для отображения списка
       $po = 0; $ts = 0;
       // *2.2.2 - выводи списки заданий
-      foreach($arrTsk as $p)
+      foreach($this->allTasks as $p)
       {
         if($po != $p['pro_id']) // *2.2.2.1 - если есть новый список, отображаем его
         {
@@ -710,34 +769,56 @@ class Oper
           $po = $p['pro_id'];                 // *2.2.2.3 - обновляем индекс номера листа задания
           $ts = 1;                            // *2.2.2.4 - устанавливаем первый индекс задания
           // *2.2.2.5 - задаём форму переименования листа заданий, или просто его имя
-          $nameList = ($_GET['renameList'] == $p['pro_id']) ? $this->renameList($p['pro_id']) : $p['pro'];
-          // *2.2.3 - вываодим фрейм проекта со ссылкой добавления нового задания
+          $nameList = ($_GET['renameList'] == $p['pro_id']) ? $this->reName($p['pro_id']) : $p['pro'];
+          // *2.2.2.6 - вываодим фрейм проекта со ссылкой добавления нового задания
           echo $this->headerList($p['pro_id'], $nameList);
-          
-          if($po == $p['pro_id'] and !empty($p['id'])) // *2.2.4 - если в проекте уже есть задания, отображаем их
-          {
-            
-          }
-
         }
-      }
-    }
+        // *2.2.3 - если в проекте уже есть задания, отображаем их
+        if($po == $p['pro_id'] and !empty($p['id'])) 
+        { // *2.2.3.1 - определеяем стили для оформления статусов заданий
+          if($p['status'] == 0) {   $stlTr = NULL;  $stlTr2 = NULL; $nav="nav5";    }
+          else {   $stlTr = " class='statusTrue'";  $stlTr2 = " statusTrue"; $nav="nav6";  }
+          // *2.2.3.2 - задаём форму переименования конкретного задания, или просто его имя
+          $nameTask = ($_GET['updl'] == $p['pro_id'] and $_GET['updt'] == $p['id']) 
+            ? $this->reName($p['id'], $p['pro_id'], $stlTr) : "<td".$stlTr.">".$p['name']."</td>";;
+          // *2.2.3.3 - создаём строки заданий в таблице
+          echo $this->tableTasks($p['id'], $p['pro_id'], $p['status'], $nav, $stlTr2, $nameTask);
+        }
+      } // конец основного foreach
+      echo "</table></div>";
+    } // *2.2* - списки заданий - отображены!
     
     
   }
   
-  function renameList($id) // ** - форма переименования листа
-  {
+  function reName($id, $idPro=null, $style=null) // ** - форма переименования листа/задания
+  { // *1 - фильтруем данные
     if(!is_int($id)) $id = (int) abs($id);
-    $nameList = "<form action='' method='post'>
+    if($idPro and !is_int($id)) $idPro = (int) abs($idPro);
+    if($style and !is_string($style)) $style = (string) $style;
+    
+    // *2 - создаём форму для переименования листа
+    if($id and !$idPro)
+    {
+      $name = "<form action='' method='post'>
                 <input class='newListNameTxt' type='text' name='newList' placeholder='please enter new project name'>
                 <input type='hidden' name='idPro' value='".$id."'>
                 <input type='hidden' name='oper' value='renameList'>
                 <input class='AddTaskBut updateList' type='submit' value='update'></form>";
-    return $nameList;
-  } // ** - форма переименования листа - создана
-  
-  function renameTask($id) {}// ** - форма переименования задания
+    }
+    
+    // *3 - создаём форму для переименования задания
+    if($id and $idPro)
+    {
+      $name = "<td".$style.">  <form action='' method='post'>
+                  <input class='newTaskNameTxt' type='text' name='newName' placeholder='please enter new task name'>
+                  <input type='hidden' name='idTsk' value='".$id."'>
+                  <input type='hidden' name='idPro' value='".$idPro."'>
+                  <input type='hidden' name='oper' value='renameTask'>
+                  <input class='AddTaskBut update' type='submit' value='update'></form></td>";
+    }
+    return $name;
+  } // ** - форма переименования листа/задания - создана
   
   // ** - формируем ссылку переименования проектов/заданий или..
   // .. для отображения форм "add2list", "SQLtask"
@@ -798,10 +879,10 @@ class Oper
         
     $form = "<div class='genMod'><div class='listName'><span class='wf'><span class='nav nav1'></span></span>".$name."
               <div class='wb'><span class='wa'><a class='nav nav1' ".$link."'></a></span> | 
-              <span class='wa'><a class='nav nav2' href='inc/oper.php?deleteList=".$id."&link=".$uri."'></a></span></div></div>";
+              <span class='wa'><a class='nav nav2' href='".self::HOST."?deleteList=".$id."&link=".$uri."'></a></span></div></div>";
     $form .= "<div class='newListName'><span class='wr'><span class='nav nav1'></span></span>
             <div class='topNewList'>
-              <form action='inc/oper.php' method='post'>
+              <form action='' method='post'>
                 <input class='newListNameInputTxt' type='text' name='newTask' placeholder='Start typing here to create a task...'>
                 <input type='hidden' name='idList' value=".$id.">
                 <input type='hidden' name='oper' value='newTask'>
@@ -809,6 +890,66 @@ class Oper
         </div></div><table>";
     return $form;
   } // ** - шапка проекта сформирована!
+  
+  // ** - формируем таблицу из списка заданий проекта
+  function tableTasks($id, $idPro, $status, $nav, $style, $name)
+  {
+    // *1 - фильтруем данные
+    if(!is_int($id)) $id = (int) abs($id);
+    if(!is_int($idPro)) $idPro = (int) abs($idPro);
+    if($status and !is_int($status)) $$status = (int) abs($status);
+    if(!is_string($nav)) $nav = (string) $nav;
+    if(!is_string($style)) $style = (string) $style;
+    if(!is_string($name)) $name = (string) $name;
+    $uri = $_SERVER['REQUEST_URI'];
+    $link = $this->smartLink($id, $idPro);
+    
+    // *2 - формируем таблицу из списка заданий
+    // *2.1 - ф-ем первый столбец со статусом задания и ссылкой на его изменение
+    $table = "<tr'><td class='navIc2".$style."'><a class='nav ".$nav."' href='".self::HOST."?status=1&updl=".$idPro."&updt=".$id."&sts=".$status."&link=".$uri."'></a></td>";
+    // *2.2 - ф-ем второй столбец с названием задания
+    $table .= $name;
+    // *2.3 - ф-ем третий столбец с функциональными кнопками изменения порядка, редактирования и удаления
+    $table .= "<td class='navIc".$style."'>";
+    // *2.3.1 - ф-ем кнопки изменения порядка
+    $table .= "<span class='wn'><a class='nav nav1' href='inc/oper.php?order=up&updl=".$idPro."&updt=".$id."&link=".$uri."'></a></span> |";
+    $table .= "<span class='wn'><a class='nav nav2' href='inc/oper.php?order=down&updl=".$idPro."&updt=".$id."&link=".$uri."'></a></span> |";
+    // *2.3.2 - ф-ем кнопку переименования задания
+    $table .= "<span class='wn'><a class='nav nav3' ".$link."'></a></span> |";
+    // *2.3.3 - ф-ем кнопку удаления задания
+    $table .= "<span class='wn'><a class='nav nav4' href='inc/oper.php?uptL=".$idPro."&uptT=".$id."&link=".$uri."'></a></span>";
+    // *2.3.4 - завершаем строку задания
+    $table .= "</td></tr>";
+    
+    // *3 - возвращаем созданную таблицу
+    return $table;
+  } // ** - таблица из списка заданий проекта - сформирована!
+  
+  // ** - метод возвращает id заданий, которое имеет больший/меньший id задания, указанного в аргументе $id
+  function more($id, $idPro, $up=true) 
+  {
+    // *1 - фильтруем данные
+    if(!is_int($id)) $id = (int) abs($id);
+    if(!is_int($idPro)) $idPro = (int) abs($idPro);
+    
+    $ex = false;
+    // *2 - проверяем самый большой/малый id задания
+    foreach($this->allTasks as $p)
+    {
+      if($p['project_id'] == $idPro)
+      {
+        // *2.1 - если у задания наибольшой id, значит по приоритету оно самое низкое
+        if(($id >= $p['id']) and !$up) continue; 
+        // *2.2 - если у задания наименьший id, значит по приоритету оно самое высокое
+        if(($id <= $p['id']) and $up) continue; 
+        // *2.3 - если же найдено задание с более высоким id, то возвращаем его id
+        if(($id < $p['id']) and !$up) return $p['id']; 
+        // *2.4 - если же найдено задание с более низким id, то возвращаем его id
+        if(($id > $p['id']) and $up) return $p['id'];
+      }
+    }
+    return false;
+  } // ** - меньший/больший id определён!
   
 } // конец класса  
 ?>
