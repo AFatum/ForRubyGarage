@@ -274,56 +274,94 @@ class Oper
   { // *0 - Проверяем есть ли пользователь и вносим параметр в переменную
     if(!$this->user) 
       { throw new Exception("Не найден пользователь при редактировании данных в БД!"); return false; }
-    else $user = $this->user;
+    else $user = (int) abs($this->user);
 
       // *1.2.1 - фильтруем входящие параметры
       if(!is_int($id))    $id = (int) abs($id);
       if(!is_int($idPro)) $idPro = (int) abs($idPro);
       if(!is_bool($up))   $up = true;
       // *1.2.2 - устанавливаем изменённые значения id заданий
-      $ID1=($up) ? $id1 : $idPro; // устанавливаем значение перемещения вверх или вниз..
-      $ID2=($up) ? $idPro : $id1; //.. в зависимости от полученного параметра $up
+      $ID1=($up) ? $id : $idPro; // устанавливаем значение перемещения вверх или вниз..
+      $ID2=($up) ? $idPro : $id; //.. в зависимости от полученного параметра $up
       
       // *1.2.3 - формируем три запроса на изменение данных
-      $sql1 = "UPDATE tasks
+/*      echo "<pre>";
+      var_dump($ID1, $ID2, $user);
+      echo "</pre>";
+    exit;*/
+      $sql = "CALL ord(".$ID1.", ".$ID2.", ".$user.")";
+      $err = "Ошибка при выполнении процедуры ord() на изменение порядка задания";
+       if(!$this->db->query($sql))
+        {  throw new Exception($err.$this->db->errno." - ".$this->db->error); return false;  }
+      else return true;
+      /////******************************************************************
+/*      echo "<pre>";
+      var_dump($idPro);
+      echo "</pre>";
+    exit;*/
+/*      $sql = "UPDATE tasks
+                    SET
+                        id = 11111
+                    WHERE
+                        id = ".$ID1."
+                    AND user_id = ".$user.";";
+      $sql .= "UPDATE tasks
+                SET
+                    id = ".$ID1." 
+                WHERE
+                    id = ".$ID2."
+                AND user_id = ".$user.";";
+      $sql .= "UPDATE tasks
+                SET
+                    id = ".$ID2." 
+                WHERE
+                    id = 11111
+                AND user_id = ".$user.";";
+    $err = "Ошибка при выполнении мульти-запроса на изменение порядка задания";
+    
+    if(!$this->db->multi_query($sql))
+      {  throw new Exception($err.$this->db->errno." - ".$this->db->error); return false;  }
+    else return true;*/
+      /////******************************************************************
+      /*$sql1 = "UPDATE tasks
                     SET
                         id = 11111
                     WHERE
                         id LIKE ".$ID1."
-                    AND user_id = ".$user;
+                    AND user_id LIKE ".$user;
         
       $sql2 = "UPDATE tasks
                 SET
                     id = ".$ID1." 
                 WHERE
                     id LIKE ".$ID2."
-                AND user_id = ".$user;
+                AND user_id LIKE ".$user;
 
       $sql3 = "UPDATE tasks
                 SET
                     id = ".$ID2." 
                 WHERE
                     id LIKE 11111
-                AND user_id = ".$user;
+                AND user_id LIKE ".$user;
       $err = "Ошибка при выполнении запроса на изменение порядка задания";
       $st1 = " (этап-1): "; $st2 = " (этап-2): "; $st3 = " (этап-3): ";
   
     // *2 - Выполняем запросы и отлавливаем исключения в случае ошибок
     if(!$result1 = $this->db->query($sql1))
       {  throw new Exception($err.$st1.$this->db->errno." - ".$this->db->error); return false;  }
-    else if ($up === 0 or $up === 1) return true; // завершаем ф-цию, т.к. здесь успешно изменен именно статус задания
+    //else if ($up === 0 or $up === 1) return true; // завершаем ф-цию, т.к. здесь успешно изменен именно статус задания
     
     else
-    {
+    { $result1->free();
       if(!$result2 = $this->db->query($sql2))
       {  throw new Exception($err.$st2.$this->db->errno." - ".$this->db->error); return false;  }
       else
-      {
+      { $result2->free();
         if(!$result3 = $this->db->query($sql3))
         {  throw new Exception($err.$st3.$this->db->errno." - ".$this->db->error); return false;  }
         else return true; // успешное изменение порядка заданий
       }
-    }
+    }*/
   } // ** - Данные в БД - изменены!
   
   function delSQL ($idPro, $id=0) // ** - Удаляем данные из БД
@@ -717,14 +755,17 @@ class Oper
       
       if($_GET['order']) // *5 - меняем порядок задания
       {
-        if(!$_GET['updl'] or !$_GET['updt']) return false;
-        if(!is_array($this->allTasks) or empty($this->allTasks)) return false;
+        if(!$_GET['updl'] or !$_GET['updt']) 
+          { throw new Exception("Поступили не все параметры updl, updt"); return false; }
+        if(!is_array($this->allTasks) or empty($this->allTasks))
+          { throw new Exception("Нет основого массива - allTasks"); return false; }
 
         // *5.1 - если нужно передвинуть задание выше
         if($_GET['order'] == "up")
         {
           // *5.1.1 - определяем id задание которое выше, если такого нет, то возвращаем false
-          if(!$next = $this->more($_GET['updt'], $_GET['updl'])) return false;
+          if(!$next = $this->more($_GET['updt'], $_GET['updl']))
+            { throw new Exception("Нет следующего параметра - up"); return false; }
           // *5.1.2 - передвигаем задание выше
           if($this->updSQL($_GET['updt'], $next))
             {  header("Location: ".self::HOST); return true; }
@@ -734,11 +775,17 @@ class Oper
         if($_GET['order'] == "down")
         {
           // *5.2.1 - определяем id задание которое ниже, если такого нет, то возвращаем false
-          if(!$next = $this->more($_GET['updt'], $_GET['updl'], false)) return false;
+          if(!$next = $this->more($_GET['updt'], $_GET['updl'], false))
+            { throw new Exception("Нет следующего параметра - down"); return false; }
+/*          echo "<pre>";
+          var_dump($_GET['updt'], $_GET['updl'], $next);
+          echo "</pre>";
+          exit;*/
           // *5.2.2 - передвигаем задание НИЖЕ
           if($this->updSQL($_GET['updt'], $next, false))
             {  header("Location: ".self::HOST); return true; }
-          else return false;
+          else
+            { throw new Exception("ф-ция updSQL() не была обработана"); return false; }
         }
         
       }
@@ -785,7 +832,7 @@ class Oper
           if($p['status'] == 0) {   $stlTr = NULL;  $stlTr2 = NULL; $nav="nav5";    }
           else {   $stlTr = " class='statusTrue'";  $stlTr2 = " statusTrue"; $nav="nav6";  }
           // *2.2.3.2 - задаём форму переименования конкретного задания, или просто его имя
-          $nameTask = ($_GET['updl'] == $p['pro_id'] and $_GET['updt'] == $p['id']) 
+          $nameTask = ($_GET['updl'] == $p['pro_id'] and $_GET['updt'] == $p['id'] and !$_GET['order']) 
             ? $this->reName($p['id'], $p['pro_id'], $stlTr) : "<td".$stlTr.">".$p['name']."</td>";;
           // *2.2.3.3 - создаём строки заданий в таблице
           echo $this->tableTasks($p['id'], $p['pro_id'], $p['status'], $nav, $stlTr2, $nameTask);
@@ -918,12 +965,12 @@ class Oper
     // *2.3 - ф-ем третий столбец с функциональными кнопками изменения порядка, редактирования и удаления
     $table .= "<td class='navIc".$style."'>";
     // *2.3.1 - ф-ем кнопки изменения порядка
-    $table .= "<span class='wn'><a class='nav nav1' href='inc/oper.php?order=up&updl=".$idPro."&updt=".$id."&link=".$uri."'></a></span> |";
-    $table .= "<span class='wn'><a class='nav nav2' href='inc/oper.php?order=down&updl=".$idPro."&updt=".$id."&link=".$uri."'></a></span> |";
+    $table .= "<span class='wn'><a class='nav nav1' href='".self::HOST."?order=up&updl=".$idPro."&updt=".$id."&link=".$uri."'></a></span> |";
+    $table .= "<span class='wn'><a class='nav nav2' href='".self::HOST."?order=down&updl=".$idPro."&updt=".$id."&link=".$uri."'></a></span> |";
     // *2.3.2 - ф-ем кнопку переименования задания
     $table .= "<span class='wn'><a class='nav nav3' ".$link."'></a></span> |";
     // *2.3.3 - ф-ем кнопку удаления задания
-    $table .= "<span class='wn'><a class='nav nav4' href='inc/oper.php?uptL=".$idPro."&uptT=".$id."&link=".$uri."'></a></span>";
+    $table .= "<span class='wn'><a class='nav nav4' href='".self::HOST."?uptL=".$idPro."&uptT=".$id."&link=".$uri."'></a></span>";
     // *2.3.4 - завершаем строку задания
     $table .= "</td></tr>";
     
