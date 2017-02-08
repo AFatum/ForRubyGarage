@@ -48,7 +48,7 @@ class Oper
     
     // *1 - подготавливаем входящие данные
     $name = $this->clear($name);
-    $pro = (int) abs($pro);
+    if($pro and !is_int($pro)) $pro = (int) abs($pro);
     
     // *2 - формируем запрос
     if($pro == 0) // *2.1 - создаём новый лист заданий - проект 
@@ -707,6 +707,14 @@ class Oper
         else return false;
       } // ** - новое задание - добавлено!
       
+      if($_POST['oper'] == "newList") // ** - добавляем новый лист заданий
+      {
+        if(!$_POST['list']) return false;
+        if($this->newSQL($_POST['list']))
+          { header("Location: ".self::HOST); return true; }
+        else return false;
+      }
+      
     } // ** - данные авторизированного пользователя - обработаны!
   } // ** - post-параметры - адаптированы!
   
@@ -785,6 +793,12 @@ class Oper
         }
         
       }
+      
+      if($_GET['id'] == "add2list") // *6 - отображаем форму добавления нового листа
+        { echo $this->add2listForm(); }
+      
+      if($_GET['id'] == "SQLtask") // *7 - отображаем форму для SQL-заданий
+        { echo $this->SQLTaskForm(); }
     } // ** - данные авторизированного пользователя - обработаны!
   } // get-параметры - адаптированы  
   
@@ -836,8 +850,10 @@ class Oper
       } // конец основного foreach
       echo "</table></div>";
     } // *2.2* - списки заданий - отображены!
-    
-    
+    // *3 - отображаем ссылки для отображения форм добавления ногового листа и SQL-заданий 
+    $link = "<a class = 'AddList' ".$this->smartLink("add2list")." title='Add TODO List'>Add TODO List</a>";
+    $link .= "<a class = 'AddList sqlTask' ".$this->smartLink("SQLtask")." title='SQL task'>SQL task</a>";
+    echo $link;
   }
   
   function reName($id, $idPro=null, $style=null) // ** - форма переименования листа/задания
@@ -873,7 +889,8 @@ class Oper
   // .. для отображения форм "add2list", "SQLtask"
   function smartLink($id=0, $idPro=0)
   { // *0 - фильтруем данные
-    if($id and !is_int($id)) $id = (int) abs($id); 
+    //if($id and !is_int($id)) $id = (int) abs($id);
+    if(!empty($id) and !is_int($id) and $id != "add2list" and $id != "SQLtask") $id = (int) abs($id);
     if($idPro and !is_int($idPro)) $idPro = (int) abs($idPro); 
     // *1 - формируем ссылку для переименования листа заданий
     if($id and !$idPro)
@@ -1012,6 +1029,57 @@ class Oper
     }   
     return false;
   } // ** - меньший/больший id определён!
+  
+  function add2listForm() // ** - форма добавления нового листа
+  {
+    $form = "<form action='' method='post'>
+                <input class='newListTxt' type='text' name='list' placeholder='Start typing here to create new list'>
+                <input type='hidden' name='oper' value='newList'>
+                <input type='submit' value='Create List' class='AddNewList'> 
+              </form>";
+    return $form;
+  }
+  
+  function SQLTaskForm() // ** - форма добавления для SQL-заданий
+  {
+    $az = "abcdefghijklmnopqrstuvwxyz";
+    $AZ = strtoupper($az);
+    
+    $form = "<div class='genMod sqlMod'><div class='listName sqlMod2'>SQL Task</div>
+              <div class='newListName sqlMod2'>
+                  <form action='' method='post'>
+                  <select name='GetOrder'>
+                      <option value='cntEachPro'>Get the count of all tasks in each project, order by tasks count descending</option>
+                      <option value='cntEachNms'>Get the count of all tasks in each project, order by projects names</option>
+                      <option value='dupTsk'>Get the list of tasks with duplicate names. Order alphabetically</option>
+                      <option value='Garage'>Get the list of tasks having several exact matches of both name and status, from the project 'Garage'</option>
+                      <option value='more10'>Get the list of project names having more than 10 tasks in status ‘completed’. Order by project_id</option>
+                  </select> 
+                  <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get1'><br>
+                  <div class='letter'>Get all statuses is <select name='statuses'> 
+                      <option value='1'>complete</option>
+                      <option value='0'>not complete</option>
+                  </select>, not repeating, alphabetically ordered
+                  <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get4'></div>
+                  <div class='letter'>Get the tasks for all projects having the name beginning with 
+                  <select name='beginLetter'>";
+    for($i=0; $i<=25; $i++)
+      { $form .= "<option value='".$AZ[$i]."'>'".$AZ[$i]."'</option>"; }
+    
+    $form .= "</select> letter
+                <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get2'></div>
+                <div class='letter letter2'>Get the list of all projects containing the 
+                <select name='middleLetter'>";
+    
+    for($i=0; $i<=25; $i++)
+      { $form .= "<option value='".$az[$i]."'>'".$az[$i]."'</option>"; }
+    
+    $form .= "</select> letter in the middle of the name.
+                <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get3'></div>
+                </form>
+            </div>";
+    return $form;
+  }
   
 } // конец класса  
 ?>
