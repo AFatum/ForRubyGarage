@@ -756,16 +756,16 @@ class Oper
       if($_GET['order']) // *5 - меняем порядок задания
       {
         if(!$_GET['updl'] or !$_GET['updt']) 
-          { throw new Exception("Поступили не все параметры updl, updt"); return false; }
+          { return false; }
         if(!is_array($this->allTasks) or empty($this->allTasks))
-          { throw new Exception("Нет основого массива - allTasks"); return false; }
+          { return false; }
 
         // *5.1 - если нужно передвинуть задание выше
         if($_GET['order'] == "up")
         {
           // *5.1.1 - определяем id задание которое выше, если такого нет, то возвращаем false
           if(!$next = $this->more($_GET['updt'], $_GET['updl']))
-            { throw new Exception("Нет следующего параметра - up"); return false; }
+            { header("Location: ".self::HOST); return false; }
           // *5.1.2 - передвигаем задание выше
           if($this->updSQL($_GET['updt'], $next))
             {  header("Location: ".self::HOST); return true; }
@@ -776,16 +776,12 @@ class Oper
         {
           // *5.2.1 - определяем id задание которое ниже, если такого нет, то возвращаем false
           if(!$next = $this->more($_GET['updt'], $_GET['updl'], false))
-            { throw new Exception("Нет следующего параметра - down"); return false; }
-/*          echo "<pre>";
-          var_dump($_GET['updt'], $_GET['updl'], $next);
-          echo "</pre>";
-          exit;*/
+            { header("Location: ".self::HOST); return false; }
           // *5.2.2 - передвигаем задание НИЖЕ
           if($this->updSQL($_GET['updt'], $next, false))
             {  header("Location: ".self::HOST); return true; }
           else
-            { throw new Exception("ф-ция updSQL() не была обработана"); return false; }
+            { header("Location: ".self::HOST); return false; }
         }
         
       }
@@ -984,23 +980,36 @@ class Oper
     // *1 - фильтруем данные
     if(!is_int($id)) $id = (int) abs($id);
     if(!is_int($idPro)) $idPro = (int) abs($idPro);
+    // *1.1 - проверяем, если нет заданий, возвращаем false
+    if(!is_array($this->allTasks) or empty($this->allTasks)) return false;
+    // *1.2 - если задания таки есть, то отображаем их
+    $array = $this->allTasks;
     
-    $ex = false;
-    // *2 - проверяем самый большой/малый id задания
-    foreach($this->allTasks as $p)
-    {
-      if($p['pro_id'] == $idPro)
+    if($up)
+    { // *2 - передвигаем задание наверх
+      krsort($array); // *2.1 - сортируем массив в обратном порядке.
+      foreach($array as $p)
       {
-        // *2.1 - если у задания наибольшой id, значит по приоритету оно самое низкое
-        if(($id >= $p['id']) and !$up) continue; 
-        // *2.2 - если у задания наименьший id, значит по приоритету оно самое высокое
-        if(($id <= $p['id']) and $up) continue; 
-        // *2.3 - если же найдено задание с более высоким id, то возвращаем его id
-        if(($id < $p['id']) and !$up) return $p['id']; 
-        // *2.4 - если же найдено задание с более низким id, то возвращаем его id
-        if(($id > $p['id']) and $up) return $p['id'];
+        if($p['pro_id'] == $idPro)
+        { // *2.2 - если текущий id заданий не более заданного - пропускаем
+          if($id <= $p['id']) continue;
+          // *2.3 - возвращаем id задания, следующий за заданным
+          else return $p['id'];
+        }
       }
-    }
+    }   
+    else
+    { // *3 - передвигаем задание вниз
+      foreach($array as $p)
+      {
+        if($p['pro_id'] == $idPro)
+        { // *3.1 - если текущий id заданий не МЕННЕЕ заданного - пропускаем
+          if($id >= $p['id']) continue;
+          // *3.2 - возвращаем id задания, следующий за заданным
+          else return $p['id'];
+        }
+      }
+    }   
     return false;
   } // ** - меньший/больший id определён!
   
