@@ -722,12 +722,12 @@ class Oper
       {
         switch($_POST['GetOrder'])
         {
-          case "cntEachPro": $this->SQLTask = $this->cntEachPro(); break;   
-          case "cntEachNms": $this->SQLTask = $this->cntEachPro(3); break;  
-          case "dupTsk":     $this->SQLTask = $this->dupTsk(); break; 
-          case "Garage":     $this->SQLTask = $this->garage(); break;  
-          case "more10":     $this->SQLTask = $this->more10(); break;            
-          default:           $this->SQLTask = $this->cntEachPro(); break;
+          case "cntEachPro": $_SESSION['SQLTask'] = $this->cntEachPro(); break;   
+          case "cntEachNms": $_SESSION['SQLTask'] = $this->cntEachPro(3); break;  
+          case "dupTsk":     $_SESSION['SQLTask'] = $this->dupTsk(); break; 
+          case "Garage":     $_SESSION['SQLTask'] = $this->garage(); break;  
+          case "more10":     $_SESSION['SQLTask'] = $this->more10(); break;            
+          default:           $_SESSION['SQLTask'] = $this->cntEachPro(); break;
         }
         header("Location: ".self::HOST."?id=SQLtask");
         return true;
