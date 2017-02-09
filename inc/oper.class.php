@@ -207,8 +207,9 @@ class Oper
     
       case "getLetter1": // *2.8 - выбор данных с определённой первой буквой в имени задания
         // *2.8.1 - Если входящий параметр не строка, завершаем ошибкой и отлавливаем исключение
-        if(!is_string($order))
-        { throw new Exception("Параметр \$order не является строкой!"); return false; }
+        /*if(!is_string($order))
+        { throw new Exception("Параметр \$order не является строкой!"); return false; }*/
+        $order = $this->clear($order);
     
         // *2.8.2 - Если же всё в порядн, тогда формируем запрос с параметром $order
         $sql = "SELECT p.name as pro, t.name
@@ -222,8 +223,9 @@ class Oper
     
       case "getLetter2": // *2.9 - выбор данных с определённой буквой в имени задания
         // *2.9.1 - Если входящий параметр не строка, завершаем ошибкой и отлавливаем исключение
-        if(!is_string($order))
-        { throw new Exception("Параметр \$order не является строкой!"); return false; }
+/*        if(!is_string($order))
+        { throw new Exception("Параметр \$order не является строкой!"); return false; }*/
+        $order = $this->clear($order);
     
         // *2.9.2 - Если же всё в порядн, тогда формируем запрос с параметром $order
         $sql = "SELECT p.name, t.name as tsk, COUNT(*) AS cnt
@@ -289,83 +291,11 @@ class Oper
       $ID2=($up) ? $idPro : $id; //.. в зависимости от полученного параметра $up
       
       // *1.2.3 - формируем три запроса на изменение данных
-/*      echo "<pre>";
-      var_dump($ID1, $ID2, $user);
-      echo "</pre>";
-    exit;*/
       $sql = "CALL ord(".$ID1.", ".$ID2.", ".$user.")";
       $err = "Ошибка при выполнении процедуры ord() на изменение порядка задания";
        if(!$this->db->query($sql))
         {  throw new Exception($err.$this->db->errno." - ".$this->db->error); return false;  }
       else return true;
-      /////******************************************************************
-/*      echo "<pre>";
-      var_dump($idPro);
-      echo "</pre>";
-    exit;*/
-/*      $sql = "UPDATE tasks
-                    SET
-                        id = 11111
-                    WHERE
-                        id = ".$ID1."
-                    AND user_id = ".$user.";";
-      $sql .= "UPDATE tasks
-                SET
-                    id = ".$ID1." 
-                WHERE
-                    id = ".$ID2."
-                AND user_id = ".$user.";";
-      $sql .= "UPDATE tasks
-                SET
-                    id = ".$ID2." 
-                WHERE
-                    id = 11111
-                AND user_id = ".$user.";";
-    $err = "Ошибка при выполнении мульти-запроса на изменение порядка задания";
-    
-    if(!$this->db->multi_query($sql))
-      {  throw new Exception($err.$this->db->errno." - ".$this->db->error); return false;  }
-    else return true;*/
-      /////******************************************************************
-      /*$sql1 = "UPDATE tasks
-                    SET
-                        id = 11111
-                    WHERE
-                        id LIKE ".$ID1."
-                    AND user_id LIKE ".$user;
-        
-      $sql2 = "UPDATE tasks
-                SET
-                    id = ".$ID1." 
-                WHERE
-                    id LIKE ".$ID2."
-                AND user_id LIKE ".$user;
-
-      $sql3 = "UPDATE tasks
-                SET
-                    id = ".$ID2." 
-                WHERE
-                    id LIKE 11111
-                AND user_id LIKE ".$user;
-      $err = "Ошибка при выполнении запроса на изменение порядка задания";
-      $st1 = " (этап-1): "; $st2 = " (этап-2): "; $st3 = " (этап-3): ";
-  
-    // *2 - Выполняем запросы и отлавливаем исключения в случае ошибок
-    if(!$result1 = $this->db->query($sql1))
-      {  throw new Exception($err.$st1.$this->db->errno." - ".$this->db->error); return false;  }
-    //else if ($up === 0 or $up === 1) return true; // завершаем ф-цию, т.к. здесь успешно изменен именно статус задания
-    
-    else
-    { $result1->free();
-      if(!$result2 = $this->db->query($sql2))
-      {  throw new Exception($err.$st2.$this->db->errno." - ".$this->db->error); return false;  }
-      else
-      { $result2->free();
-        if(!$result3 = $this->db->query($sql3))
-        {  throw new Exception($err.$st3.$this->db->errno." - ".$this->db->error); return false;  }
-        else return true; // успешное изменение порядка заданий
-      }
-    }*/
   } // ** - Данные в БД - изменены!
   
   function delSQL ($idPro, $id=0) // ** - Удаляем данные из БД
@@ -734,6 +664,26 @@ class Oper
         return true;
       }
       
+      if($_POST['Get4']) // ** - сортируем по первой букве в названии задания
+      {
+        $_SESSION['SQLTask'] = $this->beginLetter($_POST['beginLetter']);
+        header("Location: ".self::HOST."?id=SQLtask#sqlt");
+        return true;
+      } 
+      
+      if($_POST['Get3']) // ** - сортировка заданий c определённой буквой в названии задания
+      {
+        $_SESSION['SQLTask'] = $this->middleLetter($_POST['middleLetter']);
+        header("Location: ".self::HOST."?id=SQLtask#sqlt");
+        return true;
+      }  
+      
+      if($_POST['Get2']) // ** - сортировка заданий по статусам
+      {
+        $_SESSION['SQLTask'] = $this->statuses($_POST['statuses']);
+        header("Location: ".self::HOST."?id=SQLtask#sqlt");
+        return true;
+      }
     } // ** - данные авторизированного пользователя - обработаны!
   } // ** - post-параметры - адаптированы!
   
@@ -1212,6 +1162,87 @@ class Oper
       }
     // *2.3 - если же данных из БД нет, отображаем сообщение
     else $table .= "<tr><td colspan=3><strong>Projects width 10 complete tasks, is not found!</strong></td></tr>";
+    $table .= "</table>";
+    // *3 - возвращаем результат
+    return $table;
+  }
+  
+  function statuses($sts) // ** - получаем список заданий, в зависимости от статуса
+  {
+    // *0 - фильтруем данные
+    if(!is_int($sts)) $sts = (int) abs($sts);
+    // *1 - получаем данные из БД
+    $statuses = $this->getSQL("getSts", $sts);
+    $c = 1; // *1.1 - счёткие для первого столбца - порядковый номер
+     // *2 - формируем таблицу данных
+    $table = "<table class='cntTask'>";
+    // *2.1 - формируем шапку таблицы
+    $table .= "<tr><th class='numDup'>#</th>";
+    $table .= "<th class='thGar'>Project Name</th>";
+    $table .= "<th class='thGar'>Task Name</th>";
+    $table .= "<th>Status</th></tr>";
+    // *2.2 - заполняем данные из бд, если они есть
+    if(!empty($statuses))
+      foreach($statuses as $res)
+      { // *2.2.1 - задаём сообщение для статуса задания
+        if($res['status'] > 0) $s = "<span class='com'>is complete</span>";
+        if($res['status'] == 0 or $res['status'] == NULL) $s = "<span class='ncom'>is not complete</span>";
+        $table .= "<tr><td>".$c."</td><td>".$res['pro']."</td><td>".$res['name']."</td><td>".$s."</td></tr>";
+        $c++;
+      }
+    // *2.3 - если же данных из БД нет, отображаем сообщение
+    else $table .= "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>";
+    $table .= "</table>";
+    // *3 - возвращаем результат
+    return $table;
+  }  
+  
+  function beginLetter($let) // ** - получаем список заданий, с заданной начальной буквой в названии
+  {
+    // *1 - получаем данные из БД
+    $letter = $this->getSQL("getLetter1", $let);
+    $c = 1; // *1.1 - счёткие для первого столбца - порядковый номер
+     // *2 - формируем таблицу данных
+    $table = "<table class='cntTask'>";
+    // *2.1 - формируем шапку таблицы
+    $table .= "<tr><th class='numDup'>#</th>";
+    $table .= "<th class='ProNameDup'>Project Name</th>";
+    $table .= "<th>Task Name</th></tr>";
+    // *2.2 - заполняем данные из бд, если они есть
+    if(!empty($letter))
+      foreach($letter as $res)
+      {
+        $table .= "<tr><td>".$cnt."</td><td>".$res['pro']."</td><td>".$res['name']."</td></tr>";
+        $c++;
+      }
+    // *2.3 - если же данных из БД нет, отображаем сообщение
+    else $table .= "<tr><td colspan=3><strong>Tasks on the letter '".$let."' is not found.</strong></td></tr>";
+    $table .= "</table>";
+    // *3 - возвращаем результат
+    return $table;
+  }  
+  
+  function middleLetter($let) // ** - получаем список заданий, с заданной буквой в названии
+  {
+    // *1 - получаем данные из БД
+    $letter = $this->getSQL("getLetter2", $let);
+    $c = 1; // *1.1 - счёткие для первого столбца - порядковый номер
+     // *2 - формируем таблицу данных
+    $table = "<table class='cntTask'>";
+    // *2.1 - формируем шапку таблицы
+    $table .= "<tr><th class='numDup'>#</th>";
+    $table .= "<th>Project Name</th>";
+    $table .= "<th class='numDup'>Count Tasks</th></tr>";
+    // *2.2 - заполняем данные из бд, если они есть
+    if(!empty($letter))
+      foreach($letter as $res)
+      {
+        $cnt = (is_null($res['tsk'])) ? (int) $res['cnt'] - 1 : $res['cnt'];
+        $table .= "<tr><td>".$c."</td><td>".$res['name']."</td><td>".$cnt."</td></tr>";
+        $c++;
+      }
+    // *2.3 - если же данных из БД нет, отображаем сообщение
+    else $table .= "<tr><td colspan=3><strong>Projects with the letter '".$let."' is not found.</strong></td></tr>";
     $table .= "</table>";
     // *3 - возвращаем результат
     return $table;
