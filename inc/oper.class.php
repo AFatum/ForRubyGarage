@@ -32,7 +32,7 @@ class Oper
     }
     $this->user = $_SESSION['control_id'] ?: NULL;
     $this->autoErr = $_SESSION['autoErr'] ?: NULL;
-    $this->SQLTask = $_SESSION['SQLTask'] ?: NULL;
+    $this->SQLTask = $_SESSION['SQLTask'] ?: NULL;   
   }
   
   //////////--МЕТОДЫ ПО РАБОТЕ С БД И С ПОЛЬЗОВАТЕЛЯМИ--//////////////////////***********
@@ -769,7 +769,7 @@ class Oper
       if($_GET['id'] == "SQLtask") // *7 - отображаем форму для SQL-заданий
         {
           if($_GET['id2'])
-            { unset($_SESSION['SQLTask']); header("Location: ".self::HOST."?id=SQLtask");  }
+            { unset($_SESSION['SQLTask']); header("Location: ".self::HOST."?id=SQLtask#sqlt");  }
           echo $this->SQLTaskForm(); 
         }
       
@@ -878,48 +878,37 @@ class Oper
   // .. для отображения форм "add2list", "SQLtask"
   function smartLink($id=0, $idPro=0)
   { // *0 - фильтруем данные
-    //if($id and !is_int($id)) $id = (int) abs($id);
     if(!empty($id) and !is_int($id) and $id != "add2list" and $id != "SQLtask") $id = (int) abs($id);
-    if($idPro and !is_int($idPro)) $idPro = (int) abs($idPro); 
+    if($idPro and !is_int($idPro)) $idPro = (int) abs($idPro);
+    
     // *1 - формируем ссылку для переименования листа заданий
     if($id and !$idPro)
-    { // *1.1 - формируем ссылку, если уже есть параметры GET и нет параметра $_GET['renameList']
-      if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['renameList']))
-          $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&renameList=".$id;
-      // *1.2 - формируем ссылку, если нет параметров GET и есть параметр $_GET['renameList']
-      else if(!empty($_GET['renameList'])) $link = "href='".self::HOST.$_SERVER['REQUEST_URI'];
-      // *1.3 - формируем ссылку, если нет параметров GET и нет параметра $_GET['renameList']
-      else $link = "href='".self::HOST."?renameList=".$id;
-    }
-    
+    { // *1.1 - формируем ссылку, если уже есть параметры GET и нет параметра $_GET['renameList']     
+      $link = (!empty($_SERVER['QUERY_STRING']) and empty($_GET['renameList']))
+        ? "href='".self::HOST."?renameList=".$id."&".$_SERVER['QUERY_STRING']."'"
+        : "href='".self::HOST."?renameList=".$id."'";
+    }       
     // *2 - формируем ссылку для переименования задания
     if($id and $idPro)
-    { // *2.1 - формируем ссылку, если уже есть параметры GET и нет параметров $_GET['updl'] и $_GET['updt']
-      if(!empty($_SERVER['QUERY_STRING']) and empty($_GET['updl']) and empty($_GET['updt']))
-          $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&updl=".$idPro."&updt=".$id;
-      // *2.2 - формируем ссылку, если нет параметров GET и есть параметры $_GET['updl'] и $_GET['updt']
-      else if(!empty($_GET['updl']) and !empty($_GET['updt'])) $link = "href='".self::HOST.$_SERVER['REQUEST_URI'];
-      // *2.3 - формируем ссылку, если нет параметров GET и нет параметров $_GET['updl'] и $_GET['updt']
-      else $link = "href='".self::HOST."?updl=".$idPro."&updt=".$id;
-    }
-    
+    { // *2.1 - формируем ссылку, если уже есть параметры $_GET['updl'] и нет параметров $_GET['updl'] и $_GET['updt']
+      $link = (!empty($_SERVER['QUERY_STRING']) and empty($_GET['updl']) and empty($_GET['updt']))
+        ? "href='".self::HOST."?updl=".$idPro."&updt=".$id."&".$_SERVER['QUERY_STRING']."'"
+        : "href='".self::HOST."?updl=".$idPro."&updt=".$id."'";
+    }    
     // *3 - формируем ссылку для отображения формы "add2list"
     if($id == "add2list")
-    { // *3.1 - формируем ссылку, если уже есть параметры GET и параметр $_GET['id'] не равен "add2list"
-      if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "add2list")
-          $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&id=add2list'";
-      // *3.2 - формируем ссылку, если нет параметров GET и параметр $_GET['id'] таки равен "add2list"
-      else $link = "href='".self::HOST."?id=add2list'";
-    }
-    
+    { // *3.1 - формируем ссылку, если уже есть параметры GET и параметр $_GET['id'] не равен "add2list"      
+      $link = (!empty($_SERVER['QUERY_STRING']) and empty($_GET['id']))
+        ? "href='".self::HOST."?id=add2list&".$_SERVER['QUERY_STRING']."'"
+        : "href='".self::HOST."?id=add2list'";
+    }        
      // *4 - формируем ссылку для отображения формы "SQLtask"
     if($id == "SQLtask")
-    { // *4.1 - формируем ссылку, если уже есть параметры GET и параметр $_GET['id'] не равен "SQLtask"
-      if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "SQLtask")
-            $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&id=SQLtask&id2=true#sqlt'";
-      // *4.2 - формируем ссылку, если нет параметров GET и параметр $_GET['id'] таки равен "SQLtask"
-      else $link = "href='".self::HOST."?id=SQLtask&id2=true#sqlt'";
-    } 
+    { // *4.1 - формируем ссылку, если уже есть параметры GET и параметр $_GET['id'] не равен "SQLtask"      
+      $link = (!empty($_SERVER['QUERY_STRING']) and empty($_GET['id']))
+        ? "href='".self::HOST."?id=SQLtask&id2=true".$_SERVER['QUERY_STRING']."'"
+        : "href='".self::HOST."?id=SQLtask&id2=true'";
+    }   
     // *5 - возвращаем итоговую ссылку
     return $link;
   } // ** - ссылка сформирована!
