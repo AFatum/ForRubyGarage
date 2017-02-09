@@ -14,6 +14,7 @@ class Oper
   function __construct(mysqli $db)  
   { // ** - вносим первоначальные стандартные параметры: 
     $this->db = $db;
+    $this->user = $_SESSION['control_id'] ?: NULL;
     
     // *1 - отображаем форму авторизации, если пользоваетль не авторизован
     if(!$_SESSION['control'])
@@ -729,7 +730,7 @@ class Oper
           case "more10":     $_SESSION['SQLTask'] = $this->more10(); break;            
           default:           $_SESSION['SQLTask'] = $this->cntEachPro(); break;
         }
-        header("Location: ".self::HOST."?id=SQLtask");
+        header("Location: ".self::HOST."?id=SQLtask#sqlt");
         return true;
       }
       
@@ -818,7 +819,7 @@ class Oper
       if($_GET['id'] == "SQLtask") // *7 - отображаем форму для SQL-заданий
         {
           if($_GET['id2'])
-            { $this->SQLTask = NULL; header("Location: ".self::HOST."?id=SQLtask");  }
+            { unset($_SESSION['SQLTask']); header("Location: ".self::HOST."?id=SQLtask");  }
           echo $this->SQLTaskForm(); 
         }
       
@@ -827,13 +828,13 @@ class Oper
         $i = 0;
         switch($_GET['sort'])
         { 
-          case "krsort":  $i++;  // *8.4 - по количеству заданий в обратном порядке
-          case "ksort":   $i++;  // *8.3 - по количеству заданий
-          case "arsort":  $i++;  // *8.2 - по имени в обратном порядке
-          case "asort":   $i++;  // *8.1 - по имени
+          case "krsort":  $i=4; break;  // *8.4 - по количеству заданий в обратном порядке
+          case "ksort":   $i=3; break;  // *8.3 - по количеству заданий
+          case "arsort":  $i=2; break;  // *8.2 - по имени в обратном порядке
+          case "asort":   $i=1; break;  // *8.1 - по имени
         }
-       $this->SQLTask = $this->cntEachPro($i);
-       header("Location: ".self::HOST."?id=SQLtask");
+       $_SESSION['SQLTask'] = $this->cntEachPro($i);
+       header("Location: ".self::HOST."?id=SQLtask#sqlt");
        return true;
      }
       
@@ -965,9 +966,9 @@ class Oper
     if($id == "SQLtask")
     { // *4.1 - формируем ссылку, если уже есть параметры GET и параметр $_GET['id'] не равен "SQLtask"
       if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "SQLtask")
-            $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&id=SQLtask&id2=true'";
+            $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&id=SQLtask&id2=true#sqlt'";
       // *4.2 - формируем ссылку, если нет параметров GET и параметр $_GET['id'] таки равен "SQLtask"
-      else $link = "href='".self::HOST."?id=SQLtask&id2=true'";
+      else $link = "href='".self::HOST."?id=SQLtask&id2=true#sqlt'";
     } 
     // *5 - возвращаем итоговую ссылку
     return $link;
@@ -1083,7 +1084,7 @@ class Oper
     $az = "abcdefghijklmnopqrstuvwxyz";
     $AZ = strtoupper($az);
     
-    $form = "<div class='genMod sqlMod'><div class='listName sqlMod2'>SQL Task</div>
+    $form = "<div class='genMod sqlMod' id='sqlt'><div class='listName sqlMod2'>SQL Task</div>
               <div class='newListName sqlMod2'>
                   <form action='' method='post'>
                   <select name='GetOrder'>
@@ -1116,12 +1117,7 @@ class Oper
                 <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get3'></div>
                 </form>
             </div>";
-    //if(!empty($this->SQLTask)) $form .= $this->SQLTask;
     $form .= $this->SQLTask;
-    echo "<pre>";
-    var_dump($this->SQLTask);
-    echo "</pre>";
-    //exit;
     return $form;
   }
   
