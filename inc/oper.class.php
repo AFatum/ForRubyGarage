@@ -8,20 +8,20 @@ class Oper
   public $autoErr;
   public $user;
   public $allTasks;
+  public $SQLTask;
 
   // вносим в конструктор класс базы данных
   function __construct(mysqli $db)  
   { // ** - вносим первоначальные стандартные параметры: 
     $this->db = $db;
     
-    $this->user = $_SESSION['control_id'] ?: NULL;
-    $this->autoErr = $_SESSION['autoErr'] ?: NULL;
     // *1 - отображаем форму авторизации, если пользоваетль не авторизован
     if(!$_SESSION['control'])
     {    
       if($_SESSION['formReg']) $this->autoForm = $this->formReg();
       else $this->autoForm = $this->formAuto();
       if($_SESSION['control_id']) unset($_SESSION['control_id']);
+      if($_SESSION['SQLTask']) unset($_SESSION['SQLTask']);
     }
     // *2 - если же пользователь авторизован, отображаем ссылку на выход
     else
@@ -29,6 +29,9 @@ class Oper
       $this->autoForm = "<p class='login'>Your user's email: ".$_SESSION['control']." - <a href='".self::HOST."?log=out' title='logout'>Log out</a></p>";
       $this->allTasks = $this->getSQL("getAllTasks");
     }
+    $this->user = $_SESSION['control_id'] ?: NULL;
+    $this->autoErr = $_SESSION['autoErr'] ?: NULL;
+    $this->SQLTask = $_SESSION['SQLTask'] ?: NULL;
   }
   
   //////////--МЕТОДЫ ПО РАБОТЕ С БД И С ПОЛЬЗОВАТЕЛЯМИ--//////////////////////***********
@@ -715,6 +718,21 @@ class Oper
         else return false;
       }
       
+      if($_POST['Get1'] and !empty($_POST['GetOrder'])) // ** - сортировка листов заданий для SQL-Task
+      {
+        switch($_POST['GetOrder'])
+        {
+          case "cntEachPro": $this->SQLTask = $this->cntEachPro(); break;   
+          case "cntEachNms": $this->SQLTask = $this->cntEachPro(3); break;  
+          case "dupTsk":     $this->SQLTask = $this->dupTsk(); break; 
+          case "Garage":     $this->SQLTask = $this->garage(); break;  
+          case "more10":     $this->SQLTask = $this->more10(); break;            
+          default:           $this->SQLTask = $this->cntEachPro(); break;
+        }
+        header("Location: ".self::HOST."?id=SQLtask");
+        return true;
+      }
+      
     } // ** - данные авторизированного пользователя - обработаны!
   } // ** - post-параметры - адаптированы!
   
@@ -798,7 +816,27 @@ class Oper
         { echo $this->add2listForm(); }
       
       if($_GET['id'] == "SQLtask") // *7 - отображаем форму для SQL-заданий
-        { echo $this->SQLTaskForm(); }
+        {
+          if($_GET['id2'])
+            { $this->SQLTask = NULL; header("Location: ".self::HOST."?id=SQLtask");  }
+          echo $this->SQLTaskForm(); 
+        }
+      
+     if($_GET['sort']) // *8 - сортируем отображение списка проектов
+     {     
+        $i = 0;
+        switch($_GET['sort'])
+        { 
+          case "krsort":  $i++;  // *8.4 - по количеству заданий в обратном порядке
+          case "ksort":   $i++;  // *8.3 - по количеству заданий
+          case "arsort":  $i++;  // *8.2 - по имени в обратном порядке
+          case "asort":   $i++;  // *8.1 - по имени
+        }
+       $this->SQLTask = $this->cntEachPro($i);
+       header("Location: ".self::HOST."?id=SQLtask");
+       return true;
+     }
+      
     } // ** - данные авторизированного пользователя - обработаны!
   } // get-параметры - адаптированы  
   
@@ -927,9 +965,9 @@ class Oper
     if($id == "SQLtask")
     { // *4.1 - формируем ссылку, если уже есть параметры GET и параметр $_GET['id'] не равен "SQLtask"
       if(!empty($_SERVER['QUERY_STRING']) and $_GET['id'] != "SQLtask")
-            $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&id=SQLtask'";
+            $link = "href='".self::HOST.$_SERVER['REQUEST_URI']."&id=SQLtask&id2=true'";
       // *4.2 - формируем ссылку, если нет параметров GET и параметр $_GET['id'] таки равен "SQLtask"
-      else $link = "href='".self::HOST."?id=SQLtask'";
+      else $link = "href='".self::HOST."?id=SQLtask&id2=true'";
     } 
     // *5 - возвращаем итоговую ссылку
     return $link;
@@ -1078,8 +1116,110 @@ class Oper
                 <input class = 'AddTaskBut update sqlMod3' type='submit' value='Go' name='Get3'></div>
                 </form>
             </div>";
+    //if(!empty($this->SQLTask)) $form .= $this->SQLTask;
+    $form .= $this->SQLTask;
+    echo "<pre>";
+    var_dump($this->SQLTask);
+    echo "</pre>";
+    //exit;
     return $form;
   }
   
+  // ************** Методы для SQL-задания ************************************
+  function cntEachPro($id=1) // ** - отображаем отсортированные листы заданий
+  {
+    // *1 - получаем данные из БД
+    $resCntEcPro = $this->getSQL("getCntPro", $id); 
+    // *2 - формируем таблицу из полученных данных
+    $table = "<table class='cntTask'>";
+    $table .= "<tr><th>List Name
+              <span class='wn1'><a class='nav nav7' href='".self::HOST."?sort=ksort'></a></span>
+              <span class='wn1 wn2'><a class='nav nav8' href='".self::HOST."?sort=krsort'></a></span></th>
+                      <th class='tdCntTask'>Count Task
+                      <span class='wn1'><a class='nav nav7' href='".self::HOST."?sort=asort'></a></span>
+                      <span class='wn1 wn2'><a class='nav nav8' href='".self::HOST."?sort=arsort'></a></span></th>
+                      </tr>";
+    // *2.1 - заполняем данные из БД
+    foreach($resCntEcPro as $res)
+        $table .= "<tr><td>".$res['name']."</td><td class='tdCntTask'>".$res['cnt']."</td></tr>";
+    // *2.2 - закрываем таблицу и основной блок            
+    $table .= "</table></div>";
+    // *3 - возвращаем результат
+    return $table;
+  }
+  
+  function dupTsk() // ** - получаем список заданий, которые находятся в разных листах
+  { // *1 - получаем данные из БД
+    $dupTsk = $this->getSQL("getDoubleTask"); 
+    $c = 1; // *1.1 - счёткие для первого столбца - порядковый номер
+    // *2 - формируем таблицу данных
+    $table = "<table class='cntTask'>";
+    // *2.1 - формируем шапку таблицы
+    $table .= "<tr><th class='numDup'>#</th>";
+    $table .= "<th class='ProNameDup'>Project Name</th>";
+    $table .= "<th>Task Name</th></tr>";
+    // *2.2 - заполняем данные из бд, если они есть
+    if(!empty($dupTsk))
+      foreach($dupTsk as $res)
+        { $table .= "<tr><td>".$c."</td><td>".$res['pro']."</td><td>".$res['name']."</td></tr>"; $c++; }
+    // *2.3 - если же данных из БД нет, отображаем сообщение
+    else $table .= "<tr><td colspan=3><strong>Tasks is not found!</strong></td></tr>";
+    $table .= "</table>";
+    // *3 - возвращаем результат
+    return $table;
+  }
+  
+  function garage() // ** - получаем список заданий, которые находятся в проекте "Garage"
+  {
+    // *1 - получаем данные из БД
+    $garage = $this->getSQL("getGarage"); 
+    $c = 1; // *1.1 - счёткие для первого столбца - порядковый номер
+     // *2 - формируем таблицу данных
+    $table = "<table class='cntTask'>";
+    // *2.1 - формируем шапку таблицы
+    $table .= "<tr><th class='numDup'>#</th>";
+    $table .= "<th class='thGar'>Project Name</th>";
+    $table .= "<th class='thGar'>Task Name</th>";
+    $table .= "<th>Status</th></tr>"; 
+    // *2.2 - заполняем данные из бд, если они есть
+    if(!empty($garage))
+      foreach($garage as $res)
+      { // *2.2.1 - определяем сообщения статуса задания
+        $sts = (!empty($res['status'])) ? "<span class='com'>is complete</span>" : "<span class='ncom'>is not complete</span>";
+        $table .= "<tr><td>".$c."</td><td>".$res['pro']."</td><td>".$res['name']."</td><td>".$sts."</td></tr>";
+        $c++;
+      }
+    // *2.3 - если же данных из БД нет, отображаем сообщение
+    else $table .= "<tr><td colspan=4><strong>Tasks is not found!</strong></td></tr>";
+    $table .= "</table>";
+    // *3 - возвращаем результат
+    return $table;
+  } 
+  
+  function more10() // ** - получаем список заданий, которые находятся в проекте "Garage"
+  {
+    // *1 - получаем данные из БД
+    $more10 = $this->getSQL("get10CompTask");
+    $c = 1; // *1.1 - счёткие для первого столбца - порядковый номер
+     // *2 - формируем таблицу данных
+    $table = "<table class='cntTask'>";
+    // *2.1 - формируем шапку таблицы
+    $table .= "<tr><th class='numDup'>#</th>";
+    $table .= "<th>Project ID</th>";
+    $table .= "<th>Project Name</th>";
+    // *2.2 - заполняем данные из бд, если они есть
+    if(!empty($more10))
+      foreach($more10 as $res)
+      {
+        $table .= "<tr><td>".$c."</td><td>".$res['id']."</td><td>".$res['name']."</td></tr>";
+        $c++;
+      }
+    // *2.3 - если же данных из БД нет, отображаем сообщение
+    else $table .= "<tr><td colspan=3><strong>Projects width 10 complete tasks, is not found!</strong></td></tr>";
+    $table .= "</table>";
+    // *3 - возвращаем результат
+    return $table;
+  }
+
 } // конец класса  
 ?>
