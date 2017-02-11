@@ -16,6 +16,7 @@ class Oper
   { // ** - вносим первоначальные стандартные параметры: 
     $this->db = $db;
     $this->user = $_SESSION['control_id'] ?: NULL;
+    $this->autoErr = $_SESSION['autoErr'] ?: NULL;
     
     // *1 - отображаем форму авторизации, если пользоваетль не авторизован
     if(!$_SESSION['control'])
@@ -33,7 +34,6 @@ class Oper
       $this->allPro = $this->getSQL("getList");
     }
     $this->user = $_SESSION['control_id'] ?: NULL;
-    $this->autoErr = $_SESSION['autoErr'] ?: NULL;
     $this->SQLTask = $_SESSION['SQLTask'] ?: NULL;   
   }
   
@@ -45,7 +45,7 @@ class Oper
     $Data = (!is_string($data)) ? (string) $data : $data;   
     return $this->db->real_escape_string(trim(strip_tags($Data)));
   }
-    
+  
   function newSQL ($name, $pro=0) // ** - Отправляем данные в БД
   { // *0 - Проверяем есть ли пользователь и вносим параметр в переменную
     if(!$this->user) 
@@ -348,19 +348,58 @@ class Oper
     else return true;
   } // ** - Данные из БД - удалены!
   
+  function oldName ($id, $name, $idPro=0) // ** - проверяем изменено ли новое имя
+  {
+    // *1 - фильтруем данные
+    if(empty($this->allTasks))
+       { throw new Exception("нет основного массива заданий \$this->allTasks"); return false; }
+    else if(!$idPro) $tsk = $this->allPro;
+    else $tsk = $this->allTasks;
+    
+    if(!is_string($name))
+      { throw new Exception("не поступило новое имя, либо значение не строка!"); return false; }
+    
+    if(empty($name)) return true;
+    // 2* - проверяем имя задания
+    if(!$idPro)
+    {
+      foreach($tks as $p)
+      {
+        if($p['id'] == $id)
+          { if($p['name'] == $name) return true;
+          else return false;  }
+      }
+    }
+    else // 3* - проверяем имя задания
+    {
+      foreach($tks as $t)
+      {
+        if($t['pro_id'] == $idPro and $t['id'] == $id)
+          { if($t['name'] == $name) return true;
+          else return false;  }
+      }
+    }
+    return false;
+  } // ** - проверка завершена!
+  
   function rnmSQL ($id, $name, $idPro=0) // ** - переименовывем проекты и задания
   {
     // *1 - фильтруем данные
     $id = (int) abs($id);
     if($idPro > 0) $idPro = (int) abs($idPro);
-    $name = $this->clear($name);
-    // *1.1 - определяем пользователя
+    // *1.1 - если приходит пустое имя, возвращаем false
+    if(empty($name)) return false;
+    else $name = $this->clear($name);
+    // *1.2 - если имя, которое пришло, совпадает с именем, которое есть, возвращаем false
+    
+    // *1.3 - определяем пользователя
     if(!$this->user) 
       { throw new Exception("Не найден пользователь при переименовании проекта либо задания"); return false; }
     else $user = $this->user;
     // *2.1 - переименовываем лист заданий - проект
     if(!$idPro) 
     {
+      if($this->oldName($id, $name)) return false; // если старое и новое имя совпадают
       $sql = "UPDATE projects
 		      SET
                 name = '".$name."' 
@@ -370,6 +409,7 @@ class Oper
     }
     else // *2.2 - переименовываем конкретное задание
     {
+      if($this->oldName($id, $name, $idPro)) return false; // если старое и новое имя совпадают
        $sql = "UPDATE tasks
 		      SET
                 name = '".$name."' 
@@ -470,13 +510,20 @@ class Oper
   {
     // *1 - устанавливаем флаг контроля, пока не будет пройдена авторизация
     if($_SESSION['control']) unset($_SESSION['control']);
+    
     // *2 - устанавливаем параметры ошибки, если он есть
 
     $_SESSION['autoErr'] = ($err!=NULL) ? $err : NULL;
     
     // *3 - устанавливаем параметр нужной для нас формы:
     if($reg) $_SESSION['formReg'] = true;
-    else if($_SESSION['formReg']) unset($_SESSION['formReg']);
+    else
+    {
+      if($_SESSION['formReg'])  unset($_SESSION['formReg']);
+      if($_SESSION['pass'])     unset($_SESSION['pass']);
+      if($_SESSION['login'])    unset($_SESSION['login']);
+      if($_SESSION['cap'])      unset($_SESSION['cap']);
+    }
     
     // *4 - перенаправляем обратно, на главную страницу с обновлёнными параметрами отображения формы
     //header("Refresh: 1");
@@ -503,16 +550,22 @@ class Oper
   
   function formReg() // ** - формируем форму регистрации
   {
+    // *1.1 - устанавливаем данные для капчи
+    $_SESSION['cap'] = substr(md5(uniqid()), 0, 5);
+    $login = $_SESSION['login'] ?: NULL;
+    $pass = $_SESSION['pass'] ?: NULL;
     $form = "<div class='genMod autoGen'>
               <div class='listName autoTitle'>Registration</div>
               <div class='newListName'>
                   <form method='post' action=''>
-                      <input class='newListNameInputTxt autorization' type='text' placeholder='Please enter your email' name='r_email'><br>
-                      <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password' name='r_pass1'><br>
-                      <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password again' name='r_pass2'><br>
-                      <input class='AddTaskBut' type='submit' value='ok'>
+                      <input class='newListNameInputTxt autorization' type='text' placeholder='Please enter your email' name='r_email' value='".$login."'><br>
+                      <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password' name='r_pass1' value='".$pass."'><br>
+                      <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password again' name='r_pass2' value='".$pass."'><br>
+                      <img src='img/gd/my_captcha.php' class='cap'><br>
+                      <input class='newListNameInputTxt autorization' type='text' placeholder='Please enter captcha: ' name='captcha'>
+                      <p><input class='AddTaskBut' type='submit' value='ok'></p>
                   </form></div>";
-    if($this->autoErr) $form .= $this->autoErr; // *1.1 - отображаем ошибки в форме, если они есть
+    if($this->autoErr) $form .= $this->autoErr; // *1.2 - отображаем ошибки в форме, если они есть
     
     // *1.2 - добавляем окончания формы:
     $form .= "<a href='".self::HOST."?reg=2' title='Login'>Login</a></div>";
@@ -562,7 +615,15 @@ class Oper
         $err = "<span class='pass'>Your data of passwod shoud coincide twice</span>";
         return $this->autoLocation($err, true);
       }
-      // *1.2 -  если поля паролей таки совпадают - обрабатываем данные дальше...
+      // *1.2 - проверяем капчу
+      else if($_POST['cap'] != $_SESSION['cap'])
+      {
+        $_SESSION['pass'] = $_POST['r_pass1'];
+        $_SESSION['login'] = $_POST['r_email'];       
+        $err = "<span class='pass'>You entered incorrect captchas data, please try again </span>";
+        return $this->autoLocation($err, true);
+      }
+      // *1.3 -  если поля паролей таки совпадают и капча в поряде - обрабатываем данные дальше...
       else
       {
         // *1.2.1 - фильтруем данные
@@ -576,6 +637,7 @@ class Oper
           if($this->saveUser($login, $hash))
           {
             $err = "<p class='user'>User width email: '".$login."' was created successfully. You can login.</p>";
+            unset($_SESSION['pass'], $_SESSION['login'], $_SESSION['cap']);
             return $this->autoLocation($err);
           }
           // *1.2.2.2 - если внесение нового пользователя произошла ошибка, то перенаправляем обратно на форму реистрации, с замечаниями
@@ -622,7 +684,7 @@ class Oper
         // *1.2 - если все данные получены - работаем дальше
         if($this->rnmSQL($_POST['idPro'], $_POST['newList']))
           { header("Location: ".self::HOST); return true; }
-        else return false;
+        else {  header("Location: ".self::HOST); return false;  }
       } // ** - лист заданий - переименован!
       
       if($_POST['oper'] == "renameTask") // ** - переименовываем конкретное задание
@@ -632,7 +694,7 @@ class Oper
         // *1.2 - если все данные получены - работаем дальше
         if($this->rnmSQL($_POST['idTsk'], $_POST['newName'], $_POST['idPro']))
           { header("Location: ".self::HOST); return true; }
-        else return false;
+        else {  header("Location: ".self::HOST); return false;  }
       } // ** - конкретное задание - переименовано!  
       
       if($_POST['oper'] == "newTask") // ** - добавляем новое задание
@@ -711,6 +773,9 @@ class Oper
         if($_SESSION['control'])    unset($_SESSION['control']);
         if($_SESSION['autoErr'])    unset($_SESSION['autoErr']);
         if($_SESSION['formReg'])    unset($_SESSION['formReg']);
+        if($_SESSION['pass'])       unset($_SESSION['pass']);
+        if($_SESSION['login'])      unset($_SESSION['login']);
+        if($_SESSION['cap'])        unset($_SESSION['cap']);
         header("Location: ".self::HOST); 
         return true;
       }
@@ -805,7 +870,7 @@ class Oper
     } // ** - данные авторизированного пользователя - обработаны!
   } // get-параметры - адаптированы  
   
-  // ************** Методы формирования списка заданий ************************************
+  // ************** Методы формирования/обработки списка заданий ************************************
   
   function showPro() // ** - Отображаем список проектов с заданиями
   {
@@ -843,12 +908,12 @@ class Oper
           if($po == $t['pro_id'] and !empty($t['id'])) 
           {
             if($t['status'] == 0) {   $stlTr = NULL;  $stlTr2 = NULL; $nav="nav5";    }
-          else {   $stlTr = " class='statusTrue'";  $stlTr2 = " statusTrue"; $nav="nav6";  }
-          // *2.2.3.2 - задаём форму переименования конкретного задания, или просто его имя
-          $nameTask = ($_GET['rnmL'] == $t['pro_id'] and $_GET['rnmT'] == $t['id'] and !$_GET['order']) 
-            ? $this->reName($t['id'], $t['pro_id'], $stlTr) : "<td".$stlTr.">".$t['name']."</td>";;
-          // *2.2.3.3 - создаём строки заданий в таблице
-          echo $this->tableTasks($t['id'], $t['pro_id'], $t['status'], $nav, $stlTr2, $nameTask);
+            else {   $stlTr = " class='statusTrue'";  $stlTr2 = " statusTrue"; $nav="nav6";  }
+            // *2.2.3.2 - задаём форму переименования конкретного задания, или просто его имя
+            $nameTask = ($_GET['rnmL'] == $t['pro_id'] and $_GET['rnmT'] == $t['id'] and !$_GET['order']) 
+              ? $this->reName($t['id'], $t['pro_id'], $stlTr) : "<td".$stlTr.">".$t['name']."</td>";;
+            // *2.2.3.3 - создаём строки заданий в таблице
+            echo $this->tableTasks($t['id'], $t['pro_id'], $t['status'], $nav, $stlTr2, $nameTask);
           }
         } // конец основного foreach
       } // конец основного foreach

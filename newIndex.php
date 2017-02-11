@@ -12,7 +12,7 @@
 <body>
    <?php
         echo $oper->autoForm;
-  
+
         try
         {
           if($_SESSION['control'] and $_SESSION['control_id'])
