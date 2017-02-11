@@ -837,11 +837,14 @@ class Oper
       if($_GET['id'] == "add2list") // *6 - отображаем форму добавления нового листа
         { echo $this->add2listForm(); }
       
-      if($_GET['id2']) // удаляем предыдущие параметры от формы SQLTask
-        { unset($_SESSION['SQLTask']); header($this->smartLink("base65"));  }
+      
       
       if($_GET['id'] == "SQLtask") // *7 - отображаем форму для SQL-заданий
+      {
+        if($_GET['id2']) // удаляем предыдущие параметры от формы SQLTask
+        { unset($_SESSION['SQLTask']); header($this->smartLink("base65"));  }
         echo $this->SQLTaskForm();
+      }
         
      if($_GET['sort']) // *8 - сортируем отображение списка проектов
      {     
@@ -999,10 +1002,10 @@ class Oper
             : "Location: ".self::HOST;
         break;
           
-        case "base64":
+        case "base65":
           $link = (!empty($_GET['link'])) 
             ? "Location: ".self::HOST."?".base64_decode($_GET['link'])."#sqlt"
-            : "Location: ".self::HOST."?id=SQLTask#sqlt";
+            : "Location: ".self::HOST."?id=SQLtask#sqlt";
         break;
           
         default:
