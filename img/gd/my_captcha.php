@@ -1,13 +1,11 @@
 <?php
 session_start();
-//ob_start();
 $i = imageCreateFromJpeg("noise.jpg");
 
 imageAntiAlias($i, true);
 
-//$txt = substr(md5(uniqid()), 0, 5);
-//$_SESSION['cap'] = $txt;
-$txt = $_SESSION['cap'];
+$txt = substr(md5(uniqid()), 0, 5);
+$_SESSION['cap'] = $txt;
 
 
 $x = 3; $y = 35; 

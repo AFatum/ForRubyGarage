@@ -551,7 +551,6 @@ class Oper
   function formReg() // ** - формируем форму регистрации
   {
     // *1.1 - устанавливаем данные для капчи
-    $_SESSION['cap'] = substr(md5(uniqid()), 0, 5);
     $login = $_SESSION['login'] ?: NULL;
     $pass = $_SESSION['pass'] ?: NULL;
     $form = "<div class='genMod autoGen'>
@@ -616,7 +615,7 @@ class Oper
         return $this->autoLocation($err, true);
       }
       // *1.2 - проверяем капчу
-      else if($_POST['cap'] != $_SESSION['cap'])
+      else if($_POST['captcha'] != $_SESSION['cap'])
       {
         $_SESSION['pass'] = $_POST['r_pass1'];
         $_SESSION['login'] = $_POST['r_email'];       
@@ -881,11 +880,11 @@ class Oper
     // *2 - получаем список заданий и проектов из БД
     //$arrTsk = $this->getSQL("getAllTasks");
     // *2.1 - если пришёл пустой архив - отображаем сообщение про создание нового листа заданий
-    if(!is_array($this->allTasks) or empty($this->allTasks)) 
+    if(!is_array($this->allPro) or empty($this->allPro)) 
     { 
       //throw new Exception("<p>Ошибка получения данных из БД, при получении полного списка заданий</p>"); 
       //return false; 
-      echo "<p>Please create new List</p>";
+      echo "<p class='login'>Please create new List</p>";
     }
     else // *2.2 - если у пользователя уже есть списки заданий, отображаем их
     {
