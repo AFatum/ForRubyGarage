@@ -8,6 +8,7 @@ class Oper
   public $autoErr;
   public $user;
   public $allTasks;
+  public $allPro;
   public $SQLTask;
 
   // вносим в конструктор класс базы данных
@@ -29,6 +30,7 @@ class Oper
     {
       $this->autoForm = "<p class='login'>Your user's email: ".$_SESSION['control']." - <a href='".self::HOST."?log=out' title='logout'>Log out</a></p>";
       $this->allTasks = $this->getSQL("getAllTasks");
+      $this->allPro = $this->getSQL("getList");
     }
     $this->user = $_SESSION['control_id'] ?: NULL;
     $this->autoErr = $_SESSION['autoErr'] ?: NULL;
@@ -645,7 +647,11 @@ class Oper
       {
         if(!$_POST['list']) return false;
         if($this->newSQL($_POST['list']))
-          { header("Location: ".self::HOST); return true; }
+          {
+            //$this->allTasks = $this->getSQL("getAllTasks");
+            header("Location: ".self::HOST); 
+            return true; 
+          }
         else return false;
       }
       
@@ -660,28 +666,28 @@ class Oper
           case "more10":     $_SESSION['SQLTask'] = $this->more10(); break;            
           default:           $_SESSION['SQLTask'] = $this->cntEachPro(); break;
         }
-        header("Location: ".self::HOST."?id=SQLtask#sqlt");
+        header($this->smartLink("base65"));
         return true;
       }
       
       if($_POST['Get4']) // ** - сортируем по первой букве в названии задания
       {
         $_SESSION['SQLTask'] = $this->beginLetter($_POST['beginLetter']);
-        header("Location: ".self::HOST."?id=SQLtask#sqlt");
+        header($this->smartLink("base65"));
         return true;
       } 
       
       if($_POST['Get3']) // ** - сортировка заданий c определённой буквой в названии задания
       {
         $_SESSION['SQLTask'] = $this->middleLetter($_POST['middleLetter']);
-        header("Location: ".self::HOST."?id=SQLtask#sqlt");
+        header($this->smartLink("base65"));
         return true;
       }  
       
       if($_POST['Get2']) // ** - сортировка заданий по статусам
       {
         $_SESSION['SQLTask'] = $this->statuses($_POST['statuses']);
-        header("Location: ".self::HOST."?id=SQLtask#sqlt");
+        header($this->smartLink("base65"));
         return true;
       }
     } // ** - данные авторизированного пользователя - обработаны!
@@ -718,7 +724,7 @@ class Oper
       if($_GET['deleteList']) // *3 - удаляем лист задание
       {      
         if($this->delSQL($_GET['deleteList'], "all") and ($this->delSQL($_GET['deleteList'])))
-           {  header("Location: ".self::HOST.$_GET['link']); return true; }
+           {  header($this->smartLink("base64")); return true; }
         else return false;
       } // *3* - лист заданий - удалён!
            
@@ -726,7 +732,7 @@ class Oper
       {        
         if(!$_GET['updl'] or !$_GET['updt']) return false;
         if($this->updSts($_GET['updt'], $_GET['updl'], $_GET['sts']))
-             {  header("Location: ".self::HOST); return true; }
+             {  header($this->smartLink("base64")); return true; }
         else return false;
       }
       
@@ -736,16 +742,17 @@ class Oper
           { return false; }
         if(!is_array($this->allTasks) or empty($this->allTasks))
           { return false; }
+        //$link = $_GET['link'] ?: NULL;
 
         // *5.1 - если нужно передвинуть задание выше
         if($_GET['order'] == "up")
         {
           // *5.1.1 - определяем id задание которое выше, если такого нет, то возвращаем false
           if(!$next = $this->more($_GET['updt'], $_GET['updl']))
-            { header("Location: ".self::HOST); return false; }
+            { header($this->smartLink("base64")); return false; }
           // *5.1.2 - передвигаем задание выше
           if($this->updSQL($_GET['updt'], $next))
-            {  header("Location: ".self::HOST); return true; }
+            {  header($this->smartLink("base64")); return true; }
           else return false;
         }
         // *5.2 - если нужно передвинуть задание НИЖЕ
@@ -753,12 +760,12 @@ class Oper
         {
           // *5.2.1 - определяем id задание которое ниже, если такого нет, то возвращаем false
           if(!$next = $this->more($_GET['updt'], $_GET['updl'], false))
-            { header("Location: ".self::HOST); return false; }
+            { header($this->smartLink("base64")); return false; }
           // *5.2.2 - передвигаем задание НИЖЕ
           if($this->updSQL($_GET['updt'], $next, false))
-            {  header("Location: ".self::HOST); return true; }
+            {  header($this->smartLink("base64")); return true; }
           else
-            { header("Location: ".self::HOST); return false; }
+            { header($this->smartLink("base64")); return false; }
         }
         
       }
@@ -766,13 +773,12 @@ class Oper
       if($_GET['id'] == "add2list") // *6 - отображаем форму добавления нового листа
         { echo $this->add2listForm(); }
       
-      if($_GET['id'] == "SQLtask") // *7 - отображаем форму для SQL-заданий
-        {
-          if($_GET['id2'])
-            { unset($_SESSION['SQLTask']); header("Location: ".self::HOST."?id=SQLtask#sqlt");  }
-          echo $this->SQLTaskForm(); 
-        }
+      if($_GET['id2']) // удаляем предыдущие параметры от формы SQLTask
+        { unset($_SESSION['SQLTask']); header($this->smartLink("base65"));  }
       
+      if($_GET['id'] == "SQLtask") // *7 - отображаем форму для SQL-заданий
+        echo $this->SQLTaskForm();
+        
      if($_GET['sort']) // *8 - сортируем отображение списка проектов
      {     
         $i = 0;
@@ -784,9 +790,17 @@ class Oper
           case "asort":   $i=1; break;  // *8.1 - по имени
         }
        $_SESSION['SQLTask'] = $this->cntEachPro($i);
-       header("Location: ".self::HOST."?id=SQLtask#sqlt");
+       header($this->smartLink("base65"));
        return true;
      }
+      
+    // *9 - удаление задания
+    if($_GET['uptL'] and $_GET['uptT'])
+    {
+      if($this->delSQL($_GET['uptL'], $_GET['uptT']))
+        {  header($this->smartLink("base64")); return true; }
+      else return false;
+    }
       
     } // ** - данные авторизированного пользователя - обработаны!
   } // get-параметры - адаптированы  
@@ -813,33 +827,33 @@ class Oper
       // *2.2.1 - устанавливаем первоначальные параметры для отображения списка
       $po = 0; $ts = 0;
       // *2.2.2 - выводи списки заданий
-      foreach($this->allTasks as $p)
+      
+      foreach($this->allPro as $p) // *2.2.2.1 - если есть новый список, отображаем его
       {
-        if($po != $p['pro_id']) // *2.2.2.1 - если есть новый список, отображаем его
+        if($po > 0) echo "</table></div>";  // *2.2.2.2 - закрываем таблицу и основной div
+        $po = $p['id'];                     // *2.2.2.3 - обновляем индекс номера листа задания
+        $ts = 1;                            // *2.2.2.4 - устанавливаем первый индекс задания
+        // *2.2.2.5 - задаём форму переименования листа заданий, или просто его имя
+        $nameList = ($_GET['renameList'] == $p['id']) ? $this->reName($p['id']) : $p['name'];
+        // *2.2.2.6 - вываодим фрейм проекта со ссылкой добавления нового задания
+        echo $this->headerList($p['id'], $nameList);
+        foreach($this->allTasks as $t)
         {
-          if($po > 0) echo "</table></div>";  // *2.2.2.2 - закрываем таблицу и основной div
-          $po = $p['pro_id'];                 // *2.2.2.3 - обновляем индекс номера листа задания
-          $ts = 1;                            // *2.2.2.4 - устанавливаем первый индекс задания
-          // *2.2.2.5 - задаём форму переименования листа заданий, или просто его имя
-          $nameList = ($_GET['renameList'] == $p['pro_id']) ? $this->reName($p['pro_id']) : $p['pro'];
-          // *2.2.2.6 - вываодим фрейм проекта со ссылкой добавления нового задания
-          echo $this->headerList($p['pro_id'], $nameList);
-        }
-        // *2.2.3 - если в проекте уже есть задания, отображаем их
-        if($po == $p['pro_id'] and !empty($p['id'])) 
-        { // *2.2.3.1 - определеяем стили для оформления статусов заданий
-          if($p['status'] == 0) {   $stlTr = NULL;  $stlTr2 = NULL; $nav="nav5";    }
+          // *2.2.3 - если в проекте уже есть задания, отображаем их
+          if($po == $t['pro_id'] and !empty($t['id'])) 
+          {
+            if($t['status'] == 0) {   $stlTr = NULL;  $stlTr2 = NULL; $nav="nav5";    }
           else {   $stlTr = " class='statusTrue'";  $stlTr2 = " statusTrue"; $nav="nav6";  }
           // *2.2.3.2 - задаём форму переименования конкретного задания, или просто его имя
-          $nameTask = ($_GET['updl'] == $p['pro_id'] and $_GET['updt'] == $p['id'] and !$_GET['order']) 
-            ? $this->reName($p['id'], $p['pro_id'], $stlTr) : "<td".$stlTr.">".$p['name']."</td>";;
+          $nameTask = ($_GET['rnmL'] == $t['pro_id'] and $_GET['rnmT'] == $t['id'] and !$_GET['order']) 
+            ? $this->reName($t['id'], $t['pro_id'], $stlTr) : "<td".$stlTr.">".$t['name']."</td>";;
           // *2.2.3.3 - создаём строки заданий в таблице
-          echo $this->tableTasks($p['id'], $p['pro_id'], $p['status'], $nav, $stlTr2, $nameTask);
-        }
+          echo $this->tableTasks($t['id'], $t['pro_id'], $t['status'], $nav, $stlTr2, $nameTask);
+          }
+        } // конец основного foreach
       } // конец основного foreach
       echo "</table></div>";
     } // *2.2* - списки заданий - отображены!
-    // *3 - отображаем ссылки для отображения форм добавления ногового листа и SQL-заданий 
     $link = "<a class = 'AddList' ".$this->smartLink("add2list")." title='Add TODO List'>Add TODO List</a>";
     $link .= "<a class = 'AddList sqlTask' ".$this->smartLink("SQLtask")." title='SQL task'>SQL task</a>";
     echo $link;
@@ -876,13 +890,17 @@ class Oper
   
   // ** - формируем ссылку переименования проектов/заданий или..
   // .. для отображения форм "add2list", "SQLtask"
+  
   function smartLink($id=0, $idPro=0)
   { // *0 - фильтруем данные
-    if(!empty($id) and !is_int($id) and $id != "add2list" and $id != "SQLtask") $id = (int) abs($id);
+    if(!empty($id) and is_numeric($id)) $id = (int) abs($id);
+    //if(!$idPro or is_int($id)) 
     if($idPro and !is_int($idPro)) $idPro = (int) abs($idPro);
+    $update = ($_SERVER['QUERY_STRING']) ? "&".($_SERVER['QUERY_STRING']) : NULL;
+    $updateL = ($_SERVER['QUERY_STRING']) ? "?".($_SERVER['QUERY_STRING']) : NULL;
     
     // *1 - формируем ссылку для переименования листа заданий
-    if($id and !$idPro)
+    if(is_numeric($id) and !$idPro)
     { // *1.1 - формируем ссылку, если уже есть параметры GET и нет параметра $_GET['renameList']     
       $link = (!empty($_SERVER['QUERY_STRING']) and empty($_GET['renameList']))
         ? "href='".self::HOST."?renameList=".$id."&".$_SERVER['QUERY_STRING']."'"
@@ -892,23 +910,45 @@ class Oper
     if($id and $idPro)
     { // *2.1 - формируем ссылку, если уже есть параметры $_GET['updl'] и нет параметров $_GET['updl'] и $_GET['updt']
       $link = (!empty($_SERVER['QUERY_STRING']) and empty($_GET['updl']) and empty($_GET['updt']))
-        ? "href='".self::HOST."?updl=".$idPro."&updt=".$id."&".$_SERVER['QUERY_STRING']."'"
-        : "href='".self::HOST."?updl=".$idPro."&updt=".$id."'";
-    }    
-    // *3 - формируем ссылку для отображения формы "add2list"
-    if($id == "add2list")
-    { // *3.1 - формируем ссылку, если уже есть параметры GET и параметр $_GET['id'] не равен "add2list"      
-      $link = (!empty($_SERVER['QUERY_STRING']) and empty($_GET['id']))
-        ? "href='".self::HOST."?id=add2list&".$_SERVER['QUERY_STRING']."'"
-        : "href='".self::HOST."?id=add2list'";
-    }        
-     // *4 - формируем ссылку для отображения формы "SQLtask"
-    if($id == "SQLtask")
-    { // *4.1 - формируем ссылку, если уже есть параметры GET и параметр $_GET['id'] не равен "SQLtask"      
-      $link = (!empty($_SERVER['QUERY_STRING']) and empty($_GET['id']))
-        ? "href='".self::HOST."?id=SQLtask&id2=true".$_SERVER['QUERY_STRING']."'"
-        : "href='".self::HOST."?id=SQLtask&id2=true'";
-    }   
+        ? "href='".self::HOST."?rnmL=".$idPro."&rnmT=".$id."&".$_SERVER['QUERY_STRING']."'"
+        : "href='".self::HOST."?rnmL=".$idPro."&rnmT=".$id."'";
+    }
+    if(is_string($id) and !is_numeric($id))
+    {    
+      switch($id)
+      {
+        case "add2list":
+          $link = (!empty($_SERVER['QUERY_STRING']) and empty($_GET['id']))
+          ? "href='".self::HOST."?id=add2list&".$_SERVER['QUERY_STRING']."'"
+          : "href='".self::HOST."?id=add2list'";
+        break;
+          
+        case "SQLtask":
+          $link = (!empty($_SERVER['QUERY_STRING']) and empty($_GET['id']))
+          ? "href='".self::HOST."?id=SQLtask&id2=true&".$_SERVER['QUERY_STRING']."'"
+          : "href='".self::HOST."?id=SQLtask&id2=true'";
+        break;
+        
+        case "base64":
+          $link = (!empty($_GET['link'])) 
+            ? "Location: ".self::HOST."?".base64_decode($_GET['link'])
+            : "Location: ".self::HOST;
+        break;
+          
+        case "base64":
+          $link = (!empty($_GET['link'])) 
+            ? "Location: ".self::HOST."?".base64_decode($_GET['link'])."#sqlt"
+            : "Location: ".self::HOST."?id=SQLTask#sqlt";
+        break;
+          
+        default:
+          $link = (!empty($_GET['link'])) 
+            ? "Location: ".self::HOST."?".base64_decode($_GET['link'])
+            : "Location: ".self::HOST;
+        break;
+          
+      }     
+    }
     // *5 - возвращаем итоговую ссылку
     return $link;
   } // ** - ссылка сформирована!
@@ -919,11 +959,12 @@ class Oper
     // *1 - фильтруем данные
     if(!is_int($id)) $id = (int) abs($id);
     $link = $this->smartLink($id);
-    $uri = $_SERVER['REQUEST_URI'];
+    $uri = ($_SERVER['QUERY_STRING']) 
+      ? "&link=".base64_encode($_SERVER['QUERY_STRING']) : NULL;
         
     $form = "<div class='genMod'><div class='listName'><span class='wf'><span class='nav nav1'></span></span>".$name."
               <div class='wb'><span class='wa'><a class='nav nav1' ".$link."'></a></span> | 
-              <span class='wa'><a class='nav nav2' href='".self::HOST."?deleteList=".$id."&link=".$uri."'></a></span></div></div>";
+              <span class='wa'><a class='nav nav2' href='".self::HOST."?deleteList=".$id.$uri."'></a></span></div></div>";
     $form .= "<div class='newListName'><span class='wr'><span class='nav nav1'></span></span>
             <div class='topNewList'>
               <form action='' method='post'>
@@ -945,23 +986,24 @@ class Oper
     if(!is_string($nav)) $nav = (string) $nav;
     if(!is_string($style)) $style = (string) $style;
     if(!is_string($name)) $name = (string) $name;
-    $uri = $_SERVER['REQUEST_URI'];
+    $uri = ($_SERVER['QUERY_STRING']) 
+      ? "&link=".base64_encode($_SERVER['QUERY_STRING']) : NULL;
     $link = $this->smartLink($id, $idPro);
     
     // *2 - формируем таблицу из списка заданий
     // *2.1 - ф-ем первый столбец со статусом задания и ссылкой на его изменение
-    $table = "<tr'><td class='navIc2".$style."'><a class='nav ".$nav."' href='".self::HOST."?status=1&updl=".$idPro."&updt=".$id."&sts=".$status."&link=".$uri."'></a></td>";
+    $table = "<tr'><td class='navIc2".$style."'><a class='nav ".$nav."' href='".self::HOST."?status=1&updl=".$idPro."&updt=".$id."&sts=".$status.$uri."'></a></td>";
     // *2.2 - ф-ем второй столбец с названием задания
     $table .= $name;
     // *2.3 - ф-ем третий столбец с функциональными кнопками изменения порядка, редактирования и удаления
     $table .= "<td class='navIc".$style."'>";
     // *2.3.1 - ф-ем кнопки изменения порядка
-    $table .= "<span class='wn'><a class='nav nav1' href='".self::HOST."?order=up&updl=".$idPro."&updt=".$id."&link=".$uri."'></a></span> |";
-    $table .= "<span class='wn'><a class='nav nav2' href='".self::HOST."?order=down&updl=".$idPro."&updt=".$id."&link=".$uri."'></a></span> |";
+    $table .= "<span class='wn'><a class='nav nav1' href='".self::HOST."?order=up&updl=".$idPro."&updt=".$id.$uri."'></a></span> |";
+    $table .= "<span class='wn'><a class='nav nav2' href='".self::HOST."?order=down&updl=".$idPro."&updt=".$id.$uri."'></a></span> |";
     // *2.3.2 - ф-ем кнопку переименования задания
     $table .= "<span class='wn'><a class='nav nav3' ".$link."'></a></span> |";
     // *2.3.3 - ф-ем кнопку удаления задания
-    $table .= "<span class='wn'><a class='nav nav4' href='".self::HOST."?uptL=".$idPro."&uptT=".$id."&link=".$uri."'></a></span>";
+    $table .= "<span class='wn'><a class='nav nav4' href='".self::HOST."?uptL=".$idPro."&uptT=".$id.$uri."'></a></span>";
     // *2.3.4 - завершаем строку задания
     $table .= "</td></tr>";
     
