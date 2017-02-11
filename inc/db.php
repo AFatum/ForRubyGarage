@@ -13,7 +13,7 @@ if ($_SERVER['SERVER_NAME'] == "for-rubygarage-tony.herokuapp.com")
 	define ('DB_LOGIN', $urlGlob["user"]);
 	define ('DB_PASS', $urlGlob["pass"]);
 	define ('DB_NAME', substr($urlGlob["path"], 1));
-	define ('LINK_HOST', 'https://stormy-river-47352.herokuapp.com');
+	define ('LINK_HOST', 'for-rubygarage-tony.herokuapp.com');
 	$link = mysqli_connect(DB_HOST, DB_LOGIN, DB_PASS, DB_NAME) or die('Ошибка при соединении: '.mysqli_connect_error());
 }
 else

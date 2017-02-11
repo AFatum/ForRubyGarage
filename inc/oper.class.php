@@ -2,7 +2,7 @@
 class Oper
 {
   //const HOST = LINK_HOST;
-  const HOST = "newIndex.php";
+  const HOST = "index.php";
   public $db;
   public $autoForm;
   public $autoErr;
