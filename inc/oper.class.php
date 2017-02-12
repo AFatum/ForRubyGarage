@@ -555,16 +555,16 @@ class Oper
     $pass = $_SESSION['pass'] ?: NULL;
     $form = "<div class='genMod autoGen'>
               <div class='listName autoTitle'>Registration</div>
-              <div class='newListName'>
+              <div class='newListName h259'>
                   <form method='post' action=''>
                       <input class='newListNameInputTxt autorization' type='text' placeholder='Please enter your email' name='r_email' value='".$login."'><br>
                       <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password' name='r_pass1' value='".$pass."'><br>
                       <input class='newListNameInputTxt autorization' type='password' placeholder='Please enter your password again' name='r_pass2' value='".$pass."'><br>
-                      <img src='img/gd/my_captcha.php' class='cap'><br>
-                      <input class='newListNameInputTxt autorization' type='text' placeholder='Please enter captcha: ' name='captcha'>
+                      <div class='autorization'><div class='g-recaptcha' data-sitekey='6LdpTRUUAAAAAGjRT-aLEDGDOm2GRhMRYRF1a87r'></div></div>
                       <p><input class='AddTaskBut' type='submit' value='ok'></p>
                   </form></div>";
     if($this->autoErr) $form .= $this->autoErr; // *1.2 - отображаем ошибки в форме, если они есть
+    $form .= "<!--js--><script src='https://www.google.com/recaptcha/api.js?hl=en'></script>";
     
     // *1.2 - добавляем окончания формы:
     $form .= "<a href='".self::HOST."?reg=2' title='Login'>Login</a></div>";
@@ -605,6 +605,9 @@ class Oper
   
   function registration() // ** - обрабатываем данные из формы регистрации
   {
+    $secret = "6LdpTRUUAAAAADuglWuzO7bAP9Z9W0iwtiNOyGic";
+    $response = null;
+    $reCaptcha = new ReCaptcha($secret);
     // *1 - если заполнены все поля то проверяем данные
     if(!empty($_POST['r_email']) and !empty($_POST['r_pass1']) and !empty($_POST['r_pass2']))
     {
@@ -615,15 +618,64 @@ class Oper
         return $this->autoLocation($err, true);
       }
       // *1.2 - проверяем капчу
-      else if($_POST['captcha'] != $_SESSION['cap'])
+/*      else if($_POST['captcha'] != $_SESSION['cap'])
       {
         $_SESSION['pass'] = $_POST['r_pass1'];
         $_SESSION['login'] = $_POST['r_email'];       
         $err = "<span class='pass'>You entered incorrect captchas data, please try again </span>";
         return $this->autoLocation($err, true);
+      }*/
+      else if($_POST["g-recaptcha-response"]) 
+      {
+        $response = 
+            $reCaptcha->verifyResponse($_SERVER["REMOTE_ADDR"], $_POST["g-recaptcha-response"]);
+        if($response != null && $response->success)
+        {
+          // *1.2.1 - фильтруем данные
+          $login = $this->clear($_POST['r_email']) ?: $login;
+          // *1.2.2 - если пользователя с таким же email нет...
+          if(!$this->userExists($login))
+          {
+            //$pass = $this->clear($_POST['r_pass1']) ?: $pass;
+            $hash = trim(password_hash($_POST['r_pass1'], PASSWORD_BCRYPT)); // хешируем пароль
+            // *1.2.2.1 - если внесение нового пользователя прошло успешно, переводим на форму авторизации, с замечаниями
+            if($this->saveUser($login, $hash))
+            {
+              $err = "<p class='user'>User width email: '".$login."' was created successfully. You can login.</p>";
+              unset($_SESSION['pass'], $_SESSION['login'], $_SESSION['cap']);
+              return $this->autoLocation($err);
+            }
+            // *1.2.2.2 - если внесение нового пользователя произошла ошибка, то перенаправляем обратно на форму реистрации, с замечаниями
+            else
+            {
+              $err = "<p class='user_er'>Error User registration: ".$this->db->error."</p>";
+              return $this->autoLocation($err, true);
+            }
+          }
+          // *1.2.3 - если пользователя с таким же email таки есть...
+          else
+          {
+            $err = "<p class='user_er'>Error User registration: ".$this->db->error."</p>";
+            return $this->autoLocation($err, true);
+          }
+        }// r
+        else
+        {
+          $_SESSION['pass'] = $_POST['r_pass1'];
+          $_SESSION['login'] = $_POST['r_email'];       
+          $err = "<span class='pass'>You entered incorrect captchas data, please try again </span>";
+          return $this->autoLocation($err, true);
+        }
       }
-      // *1.3 -  если поля паролей таки совпадают и капча в поряде - обрабатываем данные дальше...
       else
+        {
+          $_SESSION['pass'] = $_POST['r_pass1'];
+          $_SESSION['login'] = $_POST['r_email'];       
+          $err = "<span class='pass'>You entered incorrect captchas data, please try again </span>";
+          return $this->autoLocation($err, true);
+        }
+      // *1.3 -  если поля паролей таки совпадают и капча в поряде - обрабатываем данные дальше...
+/*      else
       {
         // *1.2.1 - фильтруем данные
         $login = $this->clear($_POST['r_email']) ?: $login;
@@ -652,7 +704,7 @@ class Oper
           $err = "<p class='user_er'>Error User registration: ".$this->db->error."</p>";
           return $this->autoLocation($err, true);
         } 
-      }
+      }*/
     }
     // *2 - если же не все поля заполнены, отображаем ошибку
     else
