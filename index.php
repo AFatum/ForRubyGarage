@@ -1,6 +1,6 @@
 <?php
 	require("inc/db.php");
-	require("inc/lib.php");
+	//require("inc/lib.php");
 ?>
 <!DOCTYPE html>
 <html lang="en">
