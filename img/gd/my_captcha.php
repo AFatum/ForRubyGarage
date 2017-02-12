@@ -1,6 +1,8 @@
 <?php
 session_start();
-$i = imageCreateFromJpeg("noise.jpg");
+$i = imageCreateFromJpeg("noise2.jpg");
+//$i = imagecreatefrompng("noise.png");
+//$i = imagecreatefromgif("noise.gif");
 
 imageAntiAlias($i, true);
 
@@ -13,7 +15,7 @@ $x = 3; $y = 35;
 for($j=0; $j<5; $j++)
 {
   $z = rand(35, 45);
-  $color = imageColorAllocate($i, rand(0, 255), rand(0, 125), rand(0, 55));
+  $color = imageColorAllocate($i, rand(0, 255), rand(0, 125), rand(0, 255));
   $size = rand(25, 35);
   $angle = -30 + rand(0, 60);
   imageTtfText($i, $size, $angle, $x, $y, $color,'arial.ttf', $txt[$j]);
@@ -22,4 +24,8 @@ for($j=0; $j<5; $j++)
 
 header("Content-type: image/jpg");
 imageJpeg($i);
+/*header("Content-type: image/gif");
+imageGif($i);*/
+/*header("Content-type: image/png");
+imagePng($i);*/
 ?>
