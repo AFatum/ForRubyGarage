@@ -2,7 +2,6 @@
 ob_start();		// включаем буферизацию вывода
 session_start(); // стартуем сессию
 require("oper.class.php");
-require_once "recaptcha.php";
 header ('Content-Type: text/html;charset=utf-8');
 
 
